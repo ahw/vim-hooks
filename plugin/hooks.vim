@@ -1,28 +1,41 @@
-function! FindHookFiles(...)
-    let numEventNames = a:0
-    let eventNames = a:000
-    let files = split(glob("*") . "\n" . glob(".*"), "\n")
-    let hookFiles = []
-    for filename in files
-        for eventName in eventNames
-            if filename =~ "." . tolower(eventName) . ".vimhook"
-                call add(hookFiles, filename)
-            endif
-        endfor
-    endfor
-    return hookFiles
-endfunction
+let s:hookFiles = {}
 
-function! SimpleEcho(name)
-    echo 'Hi there ' . a:name
+function! FindHookFiles()
+    " Clear out the old dictionary of hook files if it exists.
+    let s:hookFiles = {}
+    let files = split(glob("*") . "\n" . glob(".*"), "\n")
+    for filename in files
+        " Matches filenames that start with "." and are of the form
+        " [.sortkey].eventname.vimhook. Use a very-magic regex. See :help magic.
+        if filename =~ '\v^\..+\.vimhook'
+            " This match will put filename in the 0th position, "sortkey" in
+            " the 1th position if it exists and "eventname" in the 2nd
+            " position.
+            " let matches =  matchlist(filename, '\v\.?(.*)\.(.+)\.vimhook')
+
+            " This match will put the filename in the 0th position and
+            " "eventname" in the 1th position
+            let eventName = matchlist(filename, '\v(\a+)\.vimhook$')[1]
+            let eventName = tolower(eventName)
+
+            if !has_key(s:hookFiles, eventName)
+                let s:hookFiles[eventName] = [filename]
+            else
+                call add(s:hookFiles[eventName], filename)
+            endif
+            " let s:hookFiles[eventName] = filename
+        endif
+    endfor
 endfunction
 
 function! ExecuteHookFiles(eventName)
-    let hookFiles = FindHookFiles(a:eventName)
-    for hookFile in hookFiles
-        echo "Executing " . hookFile
-        execute 'silent !./' . hookFile
-    endfor
+    let eventName = tolower(a:eventName)
+    if has_key(s:hookFiles, eventName)
+        for filename in s:hookFiles[eventName]
+            echo "> Executing " . filename . " for event " . eventName
+            " execute 'silent !./' . filename
+        endfor
+    endif
 endfunction
 
 "Create an autocmd group
@@ -31,4 +44,8 @@ aug HookGroup
     au!
     au BufWritePost * call ExecuteHookFiles('BufWritePost')
     au CursorHold * call ExecuteHookFiles('CursorHold')
+    " au CursorMoved * call ExecuteHookFiles('CursorMoved')
 aug END
+
+" Immediately run the FindHookFiles function.
+call FindHookFiles()
