@@ -10,7 +10,6 @@ function! FindHookFiles(...)
             endif
         endfor
     endfor
-    echo hookFiles
     return hookFiles
 endfunction
 
@@ -18,11 +17,18 @@ function! SimpleEcho(name)
     echo 'Hi there ' . a:name
 endfunction
 
+function! ExecuteHookFiles(eventName)
+    let hookFiles = FindHookFiles(a:eventName)
+    for hookFile in hookFiles
+        echo "Executing " . hookFile
+        execute 'silent !./' . hookFile
+    endfor
+endfunction
+
 "Create an autocmd group
 aug HookGroup
     "Clear the RefreshGroup augroup. Otherwise Vim will combine them.
     au!
-    au BufWritePost * call FindHookFiles('BufWritePost')
-    " au CursorMoved * call SimpleEcho('CursorMoved')
-    " au CursorHold * call SimpleEcho('CursorHold')
+    au BufWritePost * call ExecuteHookFiles('BufWritePost')
+    au CursorHold * call ExecuteHookFiles('CursorHold')
 aug END
