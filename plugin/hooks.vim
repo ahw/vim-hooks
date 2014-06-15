@@ -32,8 +32,9 @@ function! ExecuteHookFiles(eventName)
     let eventName = tolower(a:eventName)
     if has_key(s:hookFiles, eventName)
         for filename in s:hookFiles[eventName]
-            echo "> Executing " . filename . " for event " . eventName
-            " execute 'silent !./' . filename
+            "echo "> Executing " . filename . " for event " . eventName
+            execute 'silent !./' . filename
+            redraw!
         endfor
     endif
 endfunction
