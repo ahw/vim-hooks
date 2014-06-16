@@ -1,6 +1,5 @@
 Vim Hooks
 =========
-
 Looks for specially-named scripts like `.bufwritepost.vimhook` or
 `.000.bufwritepost.vimhook` and executes those scripts whenever &ndash; in
 this example &ndash; Vim fires the `BufWritePost` event. The general format
@@ -13,9 +12,13 @@ multiple scripts with the same `eventname` they will be executed serially
 according to the lexographic ordering of their filenames. Thus, you can
 choose your `sortkey`s strategically if you have several scripts which need
 to run in a specific order (for example, `000.bufwritepost.vimhook`,
-`100.bufwritepost.vimhook`). Currently this plugin only supports synchronous
-execution of the `*.vimhook` scripts.
+`100.bufwritepost.vimhook`).
 
+Each script is passed the name of the current buffer and the triggered event
+name as command-line arguments. So in a Bash shell script you could, for
+example, use `$1` and `$2` to access these values (see
+[#Example_usage](example usage). Currently this plugin only supports
+synchronous execution of the `*.vimhook` scripts.
 
 What is an autocommand?
 -----------------------
@@ -56,7 +59,11 @@ Example usage
 -------------
 
 ### Recompile Sass files on save
-Your working tree:
+This shows an example working tree and the contents of a two-line shell script,
+`.recompile-styles.bufwritepost.vimhook` which calls the `sass` compiler.
+Remember that the ".recompile-styles" part of the vimhook script can be
+anything you want, or left off entirely.
+
 ```
 .
 ├── style.scss
@@ -65,14 +72,117 @@ Your working tree:
 └── .recompile-styles.bufwritepost.vimhook
 ```
 
-Contents of `.recompile-styles.bufwritepost.vimhook`
-```sh
-#!/bin/sh
-sass style.scss style.css
+> **.recompile-styles.bufwritepost.vimhook**
+>
+> ```sh
+> #!/bin/sh
+> sass style.scss style.css
+> ```
+
+### Reload Chrome tabs after recompiling Sass files
+Install the [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
+Chrome extension. It requires some manual fiddling to get it up and running,
+but once you do, any `GET /reload HTTP/1.1` requests to `localhost:7700` will
+trigger a reload of whatever tabs you've selected with the extension. If you
+want a solution that doesn't involve installing a Chrome extension but only
+works on Mac OSX, see the examples using AppleScript below.
+
+An example working tree:
+```
+.
+├── .bufwritepost.vimhook
+├── _colors.scss
+├── src
+│   ├── app.js
+│   ├── models.js
+│   └── views.js
+├── style.css
+└── style.scss
 ```
 
-### Log editing events for future analytics
+> **.bufwritepost.vimhook**
+>
+> ```sh
+> #!/bin/sh
+> sass style.scss style.css
+> curl "localhost:7700/reload"
+> ```
 
+### Reload Chrome tabs after recompiling Sass files on a remote machine
+Same as the above:
+> Install the [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
+> Chrome extension.  It requires some manual fiddling to get it up and running,
+> but once you do, any `GET /reload HTTP/1.1` requests to `localhost:7700` will
+> trigger a reload of whatever tabs you've selected with the extension.
+
+Now, `ssh` into the remote host with remote port forwarding configured as
+follows:
+
+```shell
+ssh remote-host -R 7700:localhost:7700 # forwards requests on 7700 to your client's 7700
+```
+
+> **.bufwritepost.vimhook**
+>
+> ```sh
+> #!/bin/sh
+> sass style.scss style.css
+> curl "localhost:7700/reload"
+> ```
+
+### Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine
+
+This leverages a powerful feature of SSH called **port forwarding**, which
+allows you to &ndash; among other things &ndash; forward data from your remote machine back
+to your client machine, through an SSH tunnel. Here we will set things up such
+that requests made to port 7700 on the remote machine just forwarded to port
+7700 on the client machine.
+
+> **.bufwritepost.vimhook** on the **remote-host** host
+>
+> ```sh
+> #!/bin/sh
+> # Note: assumes you have mac-laptop set up in your ~/.ssh/config file.
+> # Obviously it helps if you have password-less access configured with SSH
+> # certificates.
+> ssh mac-laptop 'osascript ~/refresh_safari.applescript'
+> ```
+ 
+&nbsp;
+> **refresh_safari.applescript** on the **mac-laptop** host
+> ```applescript
+> tell application "Safari"
+>     set sameURL to URL of current tab of front window
+>     set URL of current tab of front window to sameURL
+> end tell
+> ```
+> Source: [thelowlypeon, refresh_safari.applescript](https://github.com/thelowlypeon/refresh-safari/blob/master/refresh_safari.applescript)
+
+### Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine
+Welcome to something that must be very close to Nirvana.  It is a _little_
+slow, but it's hell of a lot better than the ol' :w &#8984;&#8677; &#8984;r
+&#8984;&#8677; &#8984;r &#8984;&#8677; &#8984;r sequence you've been doing for
+so long now.
+
+It relies on AppleScript just like the above example. Just replace
+`refresh_safari.applescript` with `refresh_all_browsers.applescript`, which
+looks like the following:
+
+> **refresh_all_browsers.applescript**
+>
+> ```applescript
+> tell application "Safari"
+>     activate
+>     tell application "System Events" to keystroke "r" using command down
+> end tell
+> 
+> tell application "Firefox"
+>     activate
+>     tell application "System Events" to keystroke "r" using command down
+> end tell
+> ```
+
+### Log editing events for future analytics
 Your working tree (note that `.bufleave.vimhook` is sym-linked to
 `.bufenter.vimhook` so the same script is used to handle two events):
 ```
@@ -88,32 +198,44 @@ Your working tree (note that `.bufleave.vimhook` is sym-linked to
 └── style.scss
 ```
 
-Contents of `.bufenter.vimhook`
-```sh
-#!/bin/sh
-FILENAME=$1
-EVENTNAME=$2
-echo "${EVENTNAME} for file ${FILENAME} on `date`" >> /tmp/vim-buffer-log.log
-```
+> **.bufenter.vimhook**
+>
+> ```bash
+> #!/bin/sh
+> FILENAME=$1
+> EVENTNAME=$2
+> echo "${EVENTNAME} for file ${FILENAME} on `date`" >> /tmp/vim-buffer-log.log
+> ```
 
 Sample content of the log file:
 ```
-bufenter for file NERD_tree_1 on Sun Jun 15 19:09:13 PDT 2014
-bufenter for file  on Sun Jun 15 19:09:16 PDT 2014
-bufleave for file  on Sun Jun 15 19:09:16 PDT 2014
-bufenter for file  on Sun Jun 15 19:09:16 PDT 2014
-bufenter for file NERD_tree_1 on Sun Jun 15 19:09:16 PDT 2014
-bufenter for file NOTES on Sun Jun 15 19:09:19 PDT 2014
-bufleave for file NOTES on Sun Jun 15 19:09:20 PDT 2014
-bufenter for file NERD_tree_1 on Sun Jun 15 19:09:20 PDT 2014
-bufleave for file NOTES on Sun Jun 15 19:09:21 PDT 2014
-bufenter for file LICENSE on Sun Jun 15 19:09:21 PDT 2014
-bufleave for file LICENSE on Sun Jun 15 19:09:22 PDT 2014
-bufenter for file NERD_tree_1 on Sun Jun 15 19:09:22 PDT 2014
-bufleave for file LICENSE on Sun Jun 15 19:09:23 PDT 2014
-bufenter for file README.md on Sun Jun 15 19:09:23 PDT 2014
-bufleave for file README.md on Sun Jun 15 19:10:04 PDT 2014
-bufenter for file NERD_tree_1 on Sun Jun 15 19:10:04 PDT 2014
-bufleave for file NERD_tree_1 on Sun Jun 15 19:10:05 PDT 2014
-bufenter for file README.md on Sun Jun 15 19:10:05 PDT 2014
-````
+bufenter for file app.js on Sun Jun 15 19:09:13 PDT 2014
+bufenter for file views.js on Sun Jun 15 19:09:16 PDT 2014
+bufleave for file views.js on Sun Jun 15 19:09:16 PDT 2014
+bufenter for file views.js on Sun Jun 15 19:09:16 PDT 2014
+bufenter for file app.js on Sun Jun 15 19:09:16 PDT 2014
+bufenter for file models.js on Sun Jun 15 19:09:19 PDT 2014
+bufleave for file models.js on Sun Jun 15 19:09:20 PDT 2014
+bufenter for file app.js on Sun Jun 15 19:09:20 PDT 2014
+bufleave for file models.js on Sun Jun 15 19:09:21 PDT 2014
+bufenter for file style.scss on Sun Jun 15 19:09:21 PDT 2014
+bufleave for file style.scss on Sun Jun 15 19:09:22 PDT 2014
+bufenter for file app.js on Sun Jun 15 19:09:22 PDT 2014
+bufleave for file style.scss on Sun Jun 15 19:09:23 PDT 2014
+bufenter for file _colors.scss on Sun Jun 15 19:09:23 PDT 2014
+bufleave for file _colors.scss on Sun Jun 15 19:10:04 PDT 2014
+bufenter for file app.js on Sun Jun 15 19:10:04 PDT 2014
+bufleave for file app.js on Sun Jun 15 19:10:05 PDT 2014
+bufenter for file _colors.scss on Sun Jun 15 19:10:05 PDT 2014
+```
+
+Upcoming features
+-----------------
+- Support filtering the hook scripts by filename extension or entire
+  filename. Might want to modify the hook script naming scheme. For example,
+  `.bufwritepost.scss.vimhook` would only be executed when `*.scss` files
+  are changed. `styles.scss.bufwritepost.vimhook` or `.styles.scss.vimhook` would only be
+  executed when `BufWritePost` was fired while editing `styles.scss`.
+- Support wildcard event names so that we don't have to symlink the vim-hook
+  scripts.
+
