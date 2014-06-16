@@ -33,7 +33,7 @@ function! ExecuteHookFiles(eventname)
         for filename in s:hookFiles[eventname]
             if getfperm(filename) =~ '\v^..x'
                 echom "[vim-hooks] Executing " . filename . " for event " . eventname
-                execute 'silent !./' . filename . ' ' . shellescape(eventname) . ' ' . shellescape(getreg('%'))
+                execute 'silent !./' . filename . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
                 redraw!
             else
                 echohl WarningMsg

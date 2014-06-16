@@ -31,24 +31,31 @@ What is an autocommand?
 
 What autocmd events are available to hook into?
 -----------------------------------------------
-**BufWritePost** and **CursorHold** are the only events **vim-hooks**
-responds to. Adding others is not difficult, but I figured there would be a
-negative performance impact if **vim-hooks** was setting up listeners for
-_every_ Vim `autocmd` event, though I haven't actually tested whether or not
-this is true.
+Currently, **vim-hooks** responds to
+- `VimEnter`
+- `VimLeave`
+- `BufEnter`
+- `BufLeave`
+- `CursorHold`
+- `BufWritePost`
+- `CursorMoved`
+
+Adding others is not difficult, but I figured there would be a negative
+performance impact if **vim-hooks** was setting up listeners for _every_ Vim
+`autocmd` event, though I haven't actually tested whether or not this is true.
 
 For reference, the full list of all available `autocmd` events and a
 description of what triggers each event is available [in the Vim
 documentation](http://vimdoc.sourceforge.net/htmldoc/autocmd.html#autocmd-events)
 or by running `:help autocmd-events`. If you want to include other events
 manually you can tweak the plugin by just following the example of what is
-already in place for `BufWritePost` and `CursorHold` (you'll find it easily
-by grepping the code).
+already in place for `BufWritePost`, `CursorHold`, and the other events listed
+above (you'll find it easily by grepping the code).
 
-A few examples
---------------
+Example usage
+-------------
 
-## Recompile Sass files on save
+### Recompile Sass files on save
 Your working tree:
 ```
 .
@@ -64,13 +71,14 @@ Contents of `.recompile-styles.bufwritepost.vimhook`
 sass style.scss style.css
 ```
 
-## Log editing analytics
-> TODO
+### Log editing events for future analytics
 
-Your working tree:
+Your working tree (note that `.bufleave.vimhook` is sym-linked to
+`.bufenter.vimhook` so the same script is used to handle two events):
 ```
 .
-├── .vimenter.vimhook
+├── .bufenter.vimhook
+├── .bufleave.vimhook -> .bufenter.vimhook # this is a symlink
 ├── _colors.scss
 ├── src
 │   ├── app.js
@@ -79,3 +87,33 @@ Your working tree:
 ├── style.css
 └── style.scss
 ```
+
+Contents of `.bufenter.vimhook`
+```sh
+#!/bin/sh
+FILENAME=$1
+EVENTNAME=$2
+echo "${EVENTNAME} for file ${FILENAME} on `date`" >> /tmp/vim-buffer-log.log
+```
+
+Sample content of the log file:
+```
+bufenter for file NERD_tree_1 on Sun Jun 15 19:09:13 PDT 2014
+bufenter for file  on Sun Jun 15 19:09:16 PDT 2014
+bufleave for file  on Sun Jun 15 19:09:16 PDT 2014
+bufenter for file  on Sun Jun 15 19:09:16 PDT 2014
+bufenter for file NERD_tree_1 on Sun Jun 15 19:09:16 PDT 2014
+bufenter for file NOTES on Sun Jun 15 19:09:19 PDT 2014
+bufleave for file NOTES on Sun Jun 15 19:09:20 PDT 2014
+bufenter for file NERD_tree_1 on Sun Jun 15 19:09:20 PDT 2014
+bufleave for file NOTES on Sun Jun 15 19:09:21 PDT 2014
+bufenter for file LICENSE on Sun Jun 15 19:09:21 PDT 2014
+bufleave for file LICENSE on Sun Jun 15 19:09:22 PDT 2014
+bufenter for file NERD_tree_1 on Sun Jun 15 19:09:22 PDT 2014
+bufleave for file LICENSE on Sun Jun 15 19:09:23 PDT 2014
+bufenter for file README.md on Sun Jun 15 19:09:23 PDT 2014
+bufleave for file README.md on Sun Jun 15 19:10:04 PDT 2014
+bufenter for file NERD_tree_1 on Sun Jun 15 19:10:04 PDT 2014
+bufleave for file NERD_tree_1 on Sun Jun 15 19:10:05 PDT 2014
+bufenter for file README.md on Sun Jun 15 19:10:05 PDT 2014
+````
