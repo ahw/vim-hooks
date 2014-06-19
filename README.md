@@ -11,18 +11,42 @@ use cases out there. If you've ever wanted an easy way of hooking arbitrary
 stuff into Vim events, this is for you.
 
 Now, some more details on these "specially-named scripts." I'll try to refer
-to them consistently as "vimhook" scripts throughout. The general format of
-vimhook filenames is `[.sortkey].eventname.vimhook`, where `sortkey` is optional
-and can be whatever you want and `eventname` is any valid Vim `autocmd` event
+to them consistently as "vimhook" scripts throughout. There are three
+flavors of these vimhook scripts:
+1. VimHook scripts that are global, meaning they are executed every time the
+   appropriate event is triggered in Vim.
+2. VimHook scripts that are extension-specific, meaning they are executed
+   every time the appropriate event is triggered in Vim _and_ the filename
+   of the current buffer has an extension matching that specific in the
+   VimHook filename.
+3. VimHook scripts that are filename-specific. These are executed _only_
+   when the appropriate event is fired in Vim _and_ the filename of the
+   current buffer is exactly that specified in the VimHook filename.
+   
+Global VimHooks
+---------------
+The general format of global vimhook filenames is
+`[.sortkey].eventname.vimhook`, where `sortkey` is optional and can be
+whatever integer you want and `eventname` is any valid Vim `autocmd` event
 (case-insensitive). The filename must end in `.vimhook` (for now anyway; I'm
-considering changing the naming convention to accomodate some other use cases).
-If you would like to have multiple scripts reacting to the same `eventname`
-simply name the files using a different `sortkey` for each. When there are
-multiple vimhook scripts with the same `eventname` they will be executed
-serially according to the lexographic ordering of their filenames. Thus, you
-can choose your `sortkey`s strategically if you have several scripts which need
-to run in a specific order (for example, `000.bufwritepost.vimhook`,
-`100.bufwritepost.vimhook`).
+considering changing the naming convention to accomodate some other use
+cases).  If you would like to have multiple scripts reacting to the same
+`eventname` simply name the files using a different `sortkey` for each. When
+there are multiple vimhook scripts with the same `eventname` they will be
+executed serially according to the lexographic ordering of their filenames.
+Thus, you can choose your `sortkey`s strategically if you have several
+scripts which need to run in a specific order (for example,
+`000.bufwritepost.vimhook`, `100.bufwritepost.vimhook`).
+
+Extension-specific VimHooks
+--------------------------
+
+> TODO
+
+Filename-specific VimHooks
+--------------------------
+
+> TODO
 
 Each script is passed the name of the current buffer and the triggered event
 name as command-line arguments. So in a Bash shell script you could, for
@@ -91,18 +115,18 @@ that is now possible, and I have to say, I it's pretty awesome.
 ### Recompile Sass files on save
 This shows an example working tree and the contents of a two-line shell script,
 `.recompile-styles.bufwritepost.vimhook` which calls the `sass` compiler.
-Remember that the ".recompile-styles" part of the vimhook script can be
-anything you want, or left off entirely.
+Remember that the ".234" part of the vimhook script can be number you want,
+or left off entirely.
 
 ```
 .
 ├── style.scss
 ├── style.css
 ├── _colors.scss
-└── .recompile-styles.bufwritepost.vimhook
+└── .234.bufwritepost.vimhook
 ```
 
-> **.recompile-styles.bufwritepost.vimhook**
+> **.234.bufwritepost.vimhook**
 >
 > ```sh
 > #!/bin/sh

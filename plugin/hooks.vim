@@ -1,36 +1,106 @@
-let s:hookFiles = {}
+let s:globalHookFiles = {}
+let s:extensionSpecificHookFiles = {}
+let s:filenameSpecificHookFiles = {}
+
+function! ClearHookFiles()
+    let s:globalHookFiles = {}
+    let s:extensionSpecificHookFiles = {}
+    let s:filenameSpecificHookFiles = {}
+endfunction
+
+" function! AddHookFile(dict, eventname, filename)
+"     if !has_key(dict, eventname)
+"         let dict[eventname] = [filename]
+"     else
+"         " Make sure the list stays sorted
+"         call sort(add(dict[eventname], filename))
+"     endif
+" endfunction
 
 function! FindHookFiles()
-    " Clear out the old dictionary of hook files if it exists.
-    let s:hookFiles = {}
-    let files = split(glob("*") . "\n" . glob(".*"), "\n")
-    for filename in files
-        " Matches filenames that start with "." and are of the form
-        " [.sortkey].eventname.vimhook. Use a very-magic regex. See :help magic.
-        if filename =~ '\v^\..+\.vimhook'
-            " This match will put filename in the 0th position, "sortkey" in
-            " the 1th position if it exists and "eventname" in the 2nd
-            " position.
-            " let matches =  matchlist(filename, '\v\.?(.*)\.(.+)\.vimhook')
+    " Clear out the old dictionaries of hook files if they exist.
+    call ClearHookFiles()
 
-            " This match will put the filename in the 0th position and
-            " "eventname" in the 1th position. Use the get function to avoid
-            " invalid index errors and to return "" by default.
-            let eventname = tolower(get(matchlist(filename, '\v(\a+)\.vimhook$'), 1, ""))
-            if !has_key(s:hookFiles, eventname)
-                let s:hookFiles[eventname] = [filename]
-            else
+    let files = split(glob("*") . "\n" . glob(".*") . "\n" . glob("~/.vimhooks/*") . "\n" . glob("~/.vimhooks/.*"), "\n")
+    for hookfile in files
+        " Matches filenames that end with .vimhook. Uses a very-magic regex.
+        " See :help magic.
+        if hookfile =~ '\v\.vimhook$'
+            if hookfile =~ '\v^\.'
+                " Hidden file case
+                "   .bufwritepost.vimhook
+                "   .123.bufwritepost.vimhook
+                "   .bufwritepost.scss.vimhook
+                "
+                " This regex matches [.sortkey].eventname[.ext].vimhook.  This
+                " match will put the entire hookfile in the 0th position,
+                " "sortkey" in the 1st position, "eventname" in the 2nd
+                " position, "ext" in the 3rd position.
+                let hiddenFileMatches =  matchlist(hookfile, '\v^\.?(\d*)\.(\a+)\.?(.*)\.vimhook')
+                " Do not actually need this: let sortkey = get(hiddenFileMatches, 1, "")
+                let eventname = get(hiddenFileMatches, 2, "")
+                let ext = get(hiddenFileMatches, 3, "")
+
+                if len(ext)
+                    if !has_key(s:extensionSpecificHookFiles, ext)
+                        let s:extensionSpecificHookFiles[ext] = {}
+                    endif
+
+                    if !has_key(s:extensionSpecificHookFiles[ext], eventname)
+                        let s:extensionSpecificHookFiles[ext][eventname] = []
+                    endif
+
+                    " Make sure the list stays sorted
+                    call sort(add(s:extensionSpecificHookFiles[ext][eventname], hookfile))
+
+                else
+                    if !has_key(s:globalHookFiles, eventname)
+                        let s:globalHookFiles[eventname] = []
+                    endif
+
+                    " Make sure the list stays sorted
+                    call sort(add(s:globalHookFiles[eventname], hookfile))
+                endif
+
+            elseif hookfile =~ '\vvimhook$'
+                " Normal file case. Intended for one user wants to only
+                " react to events associated with a single file.
+                "   styles.scss.bufwritepost.vimhook
+                "   app.coffee.bufwritepost.vimhook
+                "   index.html.bufwritepost.vimhook
+                "
+                " This regex matches [filename.ext].eventname.vimhook. The match
+                " will put the entire hookfile in the 0th position, the
+                " desired filename to react to in the 1st position and
+                " "eventname" in the 2nd position.
+                let singleFileMatches = matchlist(hookfile, '\v^(.+)\.(\a+)\.vimhook')
+                let filename = get(singleFileMatches, 1, "")
+                let eventname = get(singleFileMatches, 2, "")
+
+                if !has_key(s:filenameSpecificHookFiles, filename)
+                    let s:filenameSpecificHookFiles[filename] = {}
+                endif
+
+                if !has_key(s:filenameSpecificHookFiles[filename], eventname)
+                    let s:filenameSpecificHookFiles[filename][eventname] = []
+                endif
+
                 " Make sure the list stays sorted
-                call sort(add(s:hookFiles[eventname], filename))
+                call sort(add(s:filenameSpecificHookFiles[filename][eventname], hookfile))
+
             endif
+
         endif
+
     endfor
+
+    echo s:extensionSpecificHookFiles
 endfunction
 
 function! ExecuteHookFiles(eventname)
     let eventname = tolower(a:eventname)
-    if has_key(s:hookFiles, eventname)
-        for filename in s:hookFiles[eventname]
+    if has_key(s:globalHookFiles, eventname)
+        for filename in s:globalHookFiles[eventname]
             if getfperm(filename) =~ '\v^..x'
                 echom "[vim-hooks] Executing " . filename . " for event " . eventname
                 execute 'silent !./' . filename . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
