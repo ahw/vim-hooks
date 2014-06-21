@@ -19,9 +19,15 @@ flavors of these vimhook scripts:
    every time the appropriate event is triggered in Vim _and_ the filename
    of the current buffer has an extension matching that specific in the
    VimHook filename.
-3. VimHook scripts that are filename-specific. These are executed _only_
-   when the appropriate event is fired in Vim _and_ the filename of the
+3. VimHook scripts that are file-specific. These are executed _only_ when
+   the appropriate event is fired in Vim _and_ the file represented by the
    current buffer is exactly that specified in the VimHook filename.
+
+Each script is passed the name of the current buffer and the triggered event
+name as command-line arguments. So in a Bash shell script you could, for
+example, use `$1` and `$2` to access these values (see [example
+usage](/#example-usage). Currently this plugin only supports synchronous
+execution of the `*.vimhook` scripts.
    
 Global VimHooks
 ---------------
@@ -40,19 +46,21 @@ scripts which need to run in a specific order (for example,
 
 Extension-specific VimHooks
 --------------------------
+The format of extension-specific vimhook filenames is
+`[.sortkey].eventname.ext.vimhook`, where `sortkey` is optional and can be
+whatever integer you want, `eventname` is any valid Vim `autocmd` event
+(case-insensitive), and `ext` is whatever filename extension you want to
+react to. For example, `.bufwritepost.scss.vimhook` will only be executed
+when the `BufWritePost` event is fired on `*.scss` files.
 
-> TODO
-
-Filename-specific VimHooks
+File-specific VimHooks
 --------------------------
-
-> TODO
-
-Each script is passed the name of the current buffer and the triggered event
-name as command-line arguments. So in a Bash shell script you could, for
-example, use `$1` and `$2` to access these values (see [example
-usage](/#example-usage). Currently this plugin only supports synchronous
-execution of the `*.vimhook` scripts.
+The format of file-specific vimhook filenames is
+`filename.eventname.vimhook`. For example, the vimhook named
+`README.md.bufwritepost.vimhook` will only be executed when the
+`BufWritePost` event is fired from the `README.md` buffer. The
+vimhook named `app.js.bufenter.vimhook`  will only be executed when the
+`BufEnter` evente is fired from the `app.js` buffer.
 
 Installation
 ------------

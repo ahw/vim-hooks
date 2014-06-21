@@ -94,21 +94,59 @@ function! FindHookFiles()
 
     endfor
 
-    echo s:extensionSpecificHookFiles
 endfunction
 
 function! ExecuteHookFiles(eventname)
     let eventname = tolower(a:eventname)
+    let filename = getreg('%')
+    let ext =  get(matchlist(filename, '\v\.(\a+)$'), 1, "")
+
+
+    " TODO Don't repeat yourself.
+    if has_key(s:filenameSpecificHookFiles, filename)
+        if has_key(s:filenameSpecificHookFiles[filename], eventname)
+            for hookfile in s:filenameSpecificHookFiles[filename][eventname]
+                if getfperm(hookfile) =~ '\v^..x'
+                    echom "[vim-hooks] Executing filename-specific hookfile " . hookfile . " for event " . eventname . " from file " . filename
+                    execute 'silent !./' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
+                    redraw!
+                else
+                    echohl WarningMsg
+                    echom "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
+                    echo  "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
+                    echohl None
+                endif
+            endfor
+        endif
+    endif
+
+    if has_key(s:extensionSpecificHookFiles, ext)
+        if has_key(s:extensionSpecificHookFiles[ext], eventname)
+            for hookfile in s:extensionSpecificHookFiles[ext][eventname]
+                if getfperm(hookfile) =~ '\v^..x'
+                    echom "[vim-hooks] Executing ext-specific hookfile " . hookfile . " for event " . eventname . " from file " . ext
+                    execute 'silent !./' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
+                    redraw!
+                else
+                    echohl WarningMsg
+                    echom "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
+                    echo  "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
+                    echohl None
+                endif
+            endfor
+        endif
+    endif
+
     if has_key(s:globalHookFiles, eventname)
-        for filename in s:globalHookFiles[eventname]
-            if getfperm(filename) =~ '\v^..x'
-                echom "[vim-hooks] Executing " . filename . " for event " . eventname
-                execute 'silent !./' . filename . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
+        for hookfile in s:globalHookFiles[eventname]
+            if getfperm(hookfile) =~ '\v^..x'
+                echom "[vim-hooks] Executing global hookfile " . hookfile . " for event " . eventname . " from file " . filename
+                execute 'silent !./' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
                 redraw!
             else
                 echohl WarningMsg
-                echom "[vim-hooks] Could not execute script " . filename . " because it does not have \"execute\" permissions"
-                echo  "[vim-hooks] Could not execute script " . filename . " because it does not have \"execute\" permissions"
+                echom "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
+                echo  "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
                 echohl None
             endif
         endfor
@@ -123,8 +161,8 @@ aug HookGroup
     au VimLeave * call ExecuteHookFiles('VimLeave')
     au BufEnter * call ExecuteHookFiles('BufEnter')
     au BufLeave * call ExecuteHookFiles('BufLeave')
-    au CursorHold * call ExecuteHookFiles('CursorHold')
     au BufWritePost * call ExecuteHookFiles('BufWritePost')
+    " au CursorHold * call ExecuteHookFiles('CursorHold')
     " au CursorMoved * call ExecuteHookFiles('CursorMoved')
 aug END
 
