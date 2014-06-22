@@ -1,21 +1,34 @@
 let s:globalHookFiles = {}
 let s:extensionSpecificHookFiles = {}
-let s:filenameSpecificHookFiles = {}
+let s:fileSpecificHookFiles = {}
 
 function! ClearHookFiles()
     let s:globalHookFiles = {}
     let s:extensionSpecificHookFiles = {}
-    let s:filenameSpecificHookFiles = {}
+    let s:fileSpecificHookFiles = {}
 endfunction
 
-" function! AddHookFile(dict, eventname, filename)
-"     if !has_key(dict, eventname)
-"         let dict[eventname] = [filename]
-"     else
-"         " Make sure the list stays sorted
-"         call sort(add(dict[eventname], filename))
-"     endif
-" endfunction
+function! AddHookFile(dict, eventname, primaryKey, hookfile)
+    if len(a:primaryKey)
+        if !has_key(a:dict, a:primaryKey)
+            let a:dict[a:primaryKey] = {}
+        endif
+
+        if !has_key(a:dict[a:primaryKey], a:eventname)
+            let a:dict[a:primaryKey][a:eventname] = []
+        endif
+
+        " Make sure the list stays sorted
+        call sort(add(a:dict[a:primaryKey][a:eventname], a:hookfile))
+    else
+        if !has_key(a:dict, a:eventname)
+            let a:dict[a:eventname] = []
+        endif
+
+        " Make sure the list stays sorted
+        call sort(add(a:dict[a:eventname], a:hookfile))
+    endif
+endfunction
 
 function! FindHookFiles()
     " Clear out the old dictionaries of hook files if they exist.
@@ -42,24 +55,11 @@ function! FindHookFiles()
                 let ext = get(hiddenFileMatches, 3, "")
 
                 if len(ext)
-                    if !has_key(s:extensionSpecificHookFiles, ext)
-                        let s:extensionSpecificHookFiles[ext] = {}
-                    endif
-
-                    if !has_key(s:extensionSpecificHookFiles[ext], eventname)
-                        let s:extensionSpecificHookFiles[ext][eventname] = []
-                    endif
-
-                    " Make sure the list stays sorted
-                    call sort(add(s:extensionSpecificHookFiles[ext][eventname], hookfile))
-
+                    call AddHookFile(s:extensionSpecificHookFiles, eventname, ext, hookfile)
                 else
-                    if !has_key(s:globalHookFiles, eventname)
-                        let s:globalHookFiles[eventname] = []
-                    endif
-
-                    " Make sure the list stays sorted
-                    call sort(add(s:globalHookFiles[eventname], hookfile))
+                    " If the empty string is passed, this will become a
+                    " global hook, which is what we want.
+                    call AddHookFile(s:globalHookFiles, eventname, "", hookfile)
                 endif
 
             elseif hookfile =~ '\vvimhook$'
@@ -77,23 +77,10 @@ function! FindHookFiles()
                 let filename = get(singleFileMatches, 1, "")
                 let eventname = get(singleFileMatches, 2, "")
 
-                if !has_key(s:filenameSpecificHookFiles, filename)
-                    let s:filenameSpecificHookFiles[filename] = {}
-                endif
-
-                if !has_key(s:filenameSpecificHookFiles[filename], eventname)
-                    let s:filenameSpecificHookFiles[filename][eventname] = []
-                endif
-
-                " Make sure the list stays sorted
-                call sort(add(s:filenameSpecificHookFiles[filename][eventname], hookfile))
-
+                call AddHookFile(s:fileSpecificHookFiles, eventname, filename, hookfile)
             endif
-
         endif
-
     endfor
-
 endfunction
 
 function! ExecuteHookFiles(eventname)
@@ -102,46 +89,23 @@ function! ExecuteHookFiles(eventname)
     let filename = get(matchlist(getreg('%'), '\v([^/]+)$'), 1, "")
     let ext =  get(matchlist(filename, '\v\.(\a+)$'), 1, "")
 
-    " TODO Don't repeat yourself.
-    if has_key(s:filenameSpecificHookFiles, filename)
-        if has_key(s:filenameSpecificHookFiles[filename], eventname)
-            for hookfile in s:filenameSpecificHookFiles[filename][eventname]
-                if getfperm(hookfile) =~ '\v^..x'
-                    echom "[vim-hooks] Executing filename-specific hookfile " . hookfile . " for event " . eventname . " from file " . filename
-                    execute 'silent !./' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
-                    redraw!
-                else
-                    echohl WarningMsg
-                    echom "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
-                    echo  "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
-                    echohl None
-                endif
-            endfor
-        endif
+    if has_key(s:fileSpecificHookFiles, filename)
+        call ExecuteHookFilesByEvent(s:fileSpecificHookFiles[filename], eventname)
     endif
 
     if has_key(s:extensionSpecificHookFiles, ext)
-        if has_key(s:extensionSpecificHookFiles[ext], eventname)
-            for hookfile in s:extensionSpecificHookFiles[ext][eventname]
-                if getfperm(hookfile) =~ '\v^..x'
-                    echom "[vim-hooks] Executing ext-specific hookfile " . hookfile . " for event " . eventname . " from file " . ext
-                    execute 'silent !./' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
-                    redraw!
-                else
-                    echohl WarningMsg
-                    echom "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
-                    echo  "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
-                    echohl None
-                endif
-            endfor
-        endif
+        call ExecuteHookFilesByEvent(s:extensionSpecificHookFiles[ext], eventname)
     endif
 
-    if has_key(s:globalHookFiles, eventname)
-        for hookfile in s:globalHookFiles[eventname]
+    call ExecuteHookFilesByEvent(s:globalHookFiles, eventname)
+endfunction
+
+function! ExecuteHookFilesByEvent(dict, eventname)
+    if has_key(a:dict, a:eventname)
+        for hookfile in a:dict[a:eventname]
             if getfperm(hookfile) =~ '\v^..x'
-                echom "[vim-hooks] Executing global hookfile " . hookfile . " for event " . eventname . " from file " . filename
-                execute 'silent !./' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(eventname)
+                echom "[vim-hooks] Executing hookfile " . hookfile . " after event " . a:eventname
+                execute 'silent !./' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:eventname)
                 redraw!
             else
                 echohl WarningMsg
