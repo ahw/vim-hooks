@@ -98,9 +98,9 @@ endfunction
 
 function! ExecuteHookFiles(eventname)
     let eventname = tolower(a:eventname)
-    let filename = getreg('%')
+    " Get the filename without all the path stuff
+    let filename = get(matchlist(getreg('%'), '\v([^/]+)$'), 1, "")
     let ext =  get(matchlist(filename, '\v\.(\a+)$'), 1, "")
-
 
     " TODO Don't repeat yourself.
     if has_key(s:filenameSpecificHookFiles, filename)
