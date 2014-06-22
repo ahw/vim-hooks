@@ -8,59 +8,7 @@ specifically to ease the write-save-switch-reload pain of web development, and
 my examples for auto-reloading Chrome, Firefox, and Safari after each file
 write are given below. I have a feeling there are a lot of other interesting
 use cases out there. If you've ever wanted an easy way of hooking arbitrary
-stuff into Vim events, this is for you.
-
-Now, some more details on these "specially-named scripts." I'll try to refer
-to them consistently as "vimhook" scripts throughout. There are three
-flavors of these vimhook scripts:
-1. VimHook scripts that are global, meaning they are executed every time the
-   appropriate event is triggered in Vim.
-2. VimHook scripts that are extension-specific, meaning they are executed
-   every time the appropriate event is triggered in Vim _and_ the filename
-   of the current buffer has an extension matching that specific in the
-   VimHook filename.
-3. VimHook scripts that are file-specific. These are executed _only_ when
-   the appropriate event is fired in Vim _and_ the file represented by the
-   current buffer is exactly that specified in the VimHook filename.
-
-Each script is passed the name of the current buffer and the triggered event
-name as command-line arguments. So in a Bash shell script you could, for
-example, use `$1` and `$2` to access these values (see [example
-usage](/#example-usage). Currently this plugin only supports synchronous
-execution of the `*.vimhook` scripts.
-   
-Global VimHooks
----------------
-The general format of global vimhook filenames is
-`[.sortkey].eventname.vimhook`, where `sortkey` is optional and can be
-whatever integer you want and `eventname` is any valid Vim `autocmd` event
-(case-insensitive). The filename must end in `.vimhook` (for now anyway; I'm
-considering changing the naming convention to accomodate some other use
-cases).  If you would like to have multiple scripts reacting to the same
-`eventname` simply name the files using a different `sortkey` for each. When
-there are multiple vimhook scripts with the same `eventname` they will be
-executed serially according to the lexographic ordering of their filenames.
-Thus, you can choose your `sortkey`s strategically if you have several
-scripts which need to run in a specific order (for example,
-`000.bufwritepost.vimhook`, `100.bufwritepost.vimhook`).
-
-Extension-specific VimHooks
---------------------------
-The format of extension-specific vimhook filenames is
-`[.sortkey].eventname.ext.vimhook`, where `sortkey` is optional and can be
-whatever integer you want, `eventname` is any valid Vim `autocmd` event
-(case-insensitive), and `ext` is whatever filename extension you want to
-react to. For example, `.bufwritepost.scss.vimhook` will only be executed
-when the `BufWritePost` event is fired on `*.scss` files.
-
-File-specific VimHooks
---------------------------
-The format of file-specific vimhook filenames is
-`filename.eventname.vimhook`. For example, the vimhook named
-`README.md.bufwritepost.vimhook` will only be executed when the
-`BufWritePost` event is fired from the `README.md` buffer. The
-vimhook named `app.js.bufenter.vimhook`  will only be executed when the
-`BufEnter` evente is fired from the `app.js` buffer.
+shell scripts stuff into Vim events, this is for you.
 
 Installation
 ------------
@@ -82,6 +30,67 @@ Background: what is an autocommand?
 > .exrc file.
 >
 > Source: `:help autocommands`
+
+How to name VimHook scripts
+---------------------------
+Some more details on these "specially-named scripts"; **vim-hooks** relies
+on specific naming patterns in order to figure out which scripts to execute
+after a given `autocmd` event. I'll try to refer to these scripts
+consistently as "VimHook" scripts throughout. There are three flavors of
+VimHook scripts:
+
+1. VimHook scripts that are global, meaning they are executed every time the
+   appropriate event is triggered in Vim.
+2. VimHook scripts that are extension-specific, meaning they are executed
+   every time the appropriate event is triggered in Vim _and_ the filename
+   of the current buffer has an extension matching that specific in the
+   VimHook filename.
+3. VimHook scripts that are file-specific. These are executed _only_ when
+   the appropriate event is fired in Vim _and_ the file represented by the
+   current buffer is exactly that specified in the VimHook filename.
+
+Each script is passed the name of the current buffer and the triggered event
+name as command-line arguments. So in a Bash shell script you could, for
+example, use `$1` and `$2` to access these values (see [example
+usage](/#example-usage). Currently this plugin only supports synchronous
+execution of the `*.vimhook` scripts.
+   
+Global VimHooks
+---------------
+The format of global VimHook filenames is `[.sortkey].eventname.vimhook`,
+where `sortkey` is optional and can be whatever integer you want and
+`eventname` is any valid Vim `autocmd` event (case-insensitive). The
+filename must end in `.vimhook` (for now anyway; I'm considering changing
+the naming convention to accomodate some other use cases).  If you would
+like to have multiple scripts reacting to the same `eventname` simply name
+the files using a different `sortkey` for each. When there are multiple
+VimHook scripts with the same `eventname` they will be executed serially
+according to the lexographic ordering of their filenames.  Thus, you can
+choose your `sortkey`s strategically if you have several scripts which need
+to run in a specific order (for example, `000.bufwritepost.vimhook`,
+`100.bufwritepost.vimhook`).
+
+Extension-specific VimHooks
+--------------------------
+The format of extension-specific VimHook filenames is
+`[.sortkey].eventname.ext.vimhook`, where `sortkey` is optional and can be
+whatever integer you want, `eventname` is any valid Vim `autocmd` event
+(case-insensitive), and `ext` is whatever filename extension you want to
+react to. For example, `.bufwritepost.scss.vimhook` will only be executed
+when the `BufWritePost` event is fired on `*.scss` files.
+
+File-specific VimHooks
+--------------------------
+The format of file-specific VimHook filenames is
+`filename.eventname.vimhook`, where `filename` is the full name you want to
+react to and `eventname` is any valid Vim `autocmd` event
+(case-insensitive). In other words, you simply need to append
+`eventname.vimhook` to whatever file you want the hook to be associated
+with. For example, the VimHook named `README.md.bufwritepost.vimhook` will
+only be executed when the `BufWritePost` event is fired from the `README.md`
+buffer; the VimHook named `app.js.bufenter.vimhook`  will only be executed
+when the `BufEnter` evente is fired from the `app.js` buffer.
+
 
 What autocmd events are exposed in by Vim Hooks?
 ------------------------------------------------
@@ -123,7 +132,7 @@ that is now possible, and I have to say, I it's pretty awesome.
 ### Recompile Sass files on save
 This shows an example working tree and the contents of a two-line shell script,
 `.recompile-styles.bufwritepost.vimhook` which calls the `sass` compiler.
-Remember that the ".234" part of the vimhook script can be number you want,
+Remember that the ".234" part of the VimHook script can be number you want,
 or left off entirely.
 
 ```
@@ -222,6 +231,7 @@ to know when to reload your selected tabs in the browser.
 > Source: [thelowlypeon, refresh_safari.applescript](https://github.com/thelowlypeon/refresh-safari/blob/master/refresh_safari.applescript)
 
 ### Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine
+
 Welcome to a place that must be very close to webdev Nirvana.  It is a _little_
 slow, but it's hell of a lot better than anything else I've seen.
 
@@ -247,6 +257,7 @@ well.**
 > ```
 
 ### Log editing events for future analytics
+
 My only non-webdev example. I don't know, maybe you're into collecting data.
 This will log out timestamps each time you enter and exit a new buffer in
 Vim. Your working tree is below. Note that `.bufleave.vimhook` is sym-linked
@@ -298,15 +309,9 @@ bufenter for file _colors.scss on Sun Jun 15 19:10:05 PDT 2014
 
 Upcoming features
 -----------------
-- Support filtering the hook scripts by filename extension or entire
-  filename. Might want to modify the hook script naming scheme. For example,
-  `.bufwritepost.scss.vimhook` would only be executed when `*.scss` files
-  are changed. `styles.scss.bufwritepost.vimhook` or `.styles.scss.vimhook` would only be
-  executed when `BufWritePost` was fired while editing `styles.scss`.
 - Support wildcard event names so that we don't have to symlink the vim-hook
   scripts.
-- Come up with a way to write files without triggering the vimhook scripts.
+- Come up with a way to write files without triggering the VimHook scripts.
   Like sometimes you're just editing the README of your project and don't really
   want to trigger all those hooks.
-- Always search a global vimhook script location in addition to the current
-  working directory (e.g., `~/.vimhooks/`)
+- Asynchronous execution of hook files.
