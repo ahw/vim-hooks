@@ -3,12 +3,18 @@ Vim Hooks
 This is a Vim plugin that looks for specially-named scripts in your current
 working directory like `.bufwritepost.vimhook` or `.cursorhold.vimhook` and
 executes those scripts whenever &ndash; in this example &ndash; Vim fires the
-`BufWritePost` and `CursorHold` events, respectively. I wrote this plugin
-specifically to ease the write-save-switch-reload pain of web development, and
-my examples for auto-reloading Chrome, Firefox, and Safari after each file
-write are given below. I have a feeling there are a lot of other interesting
-use cases out there. If you've ever wanted an easy way of hooking arbitrary
-shell scripts stuff into Vim events, this is for you.
+`BufWritePost` and `CursorHold` `autocmd` events, respectively. I wrote this
+plugin specifically to ease the write-save-switch-reload pain of web
+development, and my most salient use case so far is the ability to auto-reload
+Chrome, Firefox, and Safari tabs after a single file save (`:w`) in Vim, though
+I have a feeling there are a lot of other interesting use cases out there. If
+you've ever wanted an easy way of hooking arbitrary shell scripts into Vim
+events, this is for you.
+
+In the next sections I'll describe how to install the **vim-hooks** plugin,
+give a bit of background on `autocommands` and events in Vim, and then explain
+in detail how use this plugin to hook arbitrary scripts into these events,
+which is the whole point of this plugin.
 
 Installation
 ------------
@@ -19,7 +25,7 @@ then simply copy and paste:
     cd ~/.vim/bundle
     git clone https://github.com/ahw/vim-hooks.git
 
-Background: what is an autocommand?
+Background: What is an autocommand?
 -----------------------------------
 > You can specify commands to be executed automatically when reading or
 > writing a file, when entering or leaving a buffer or window, and when
@@ -33,27 +39,31 @@ Background: what is an autocommand?
 
 How to name VimHook scripts
 ---------------------------
-Some more details on these "specially-named scripts"; **vim-hooks** relies
-on specific naming patterns in order to figure out which scripts to execute
-after a given `autocmd` event. I'll try to refer to these scripts
-consistently as "VimHook" scripts throughout. There are three flavors of
-VimHook scripts:
+The **vim-hooks** plugin relies on specific filename patterns in order to
+figure out which scripts to execute after a given `autocmd` event. I'll try to
+refer to these scripts consistently as "VimHook" scripts throughout. There are
+three flavors of VimHook scripts:
 
-1. VimHook scripts that are global, meaning they are executed every time the
-   appropriate event is triggered in Vim.
-2. VimHook scripts that are extension-specific, meaning they are executed
+1. VimHook scripts that are **global**, meaning they are executed every time the
+   appropriate event is triggered in Vim, regardless of what file you're
+   editing.
+2. VimHook scripts that are **extension-specific**, meaning they are executed
    every time the appropriate event is triggered in Vim _and_ the filename
-   of the current buffer has an extension matching that specific in the
-   VimHook filename.
-3. VimHook scripts that are file-specific. These are executed _only_ when
-   the appropriate event is fired in Vim _and_ the file represented by the
-   current buffer is exactly that specified in the VimHook filename.
+   of the current buffer has an extension corresponding to that which is
+   specified in the VimHook filename. For example, you could create a VimHook
+   script which is executed only when `*.js` files are changed.
+3. VimHook scripts that are **file-specific**. These are executed only when the
+   appropriate event is fired in Vim _and_ the filename of the current buffer
+   buffer is exactly that which is specified in the VimHook filename. For
+   example, you could create a VimHook script which is executed only when
+   `some-special-file.html` changes.
 
 Each script is passed the name of the current buffer and the triggered event
 name as command-line arguments. So in a Bash shell script you could, for
 example, use `$1` and `$2` to access these values (see [example
-usage](/#example-usage). Currently this plugin only supports synchronous
-execution of the `*.vimhook` scripts.
+usage](/#example-usage)). Currently this plugin only supports synchronous
+execution of the `*.vimhook` scripts, but I hope to implement asynchronous
+execution later.
    
 Global VimHooks
 ---------------
@@ -114,7 +124,7 @@ documentation](http://vimdoc.sourceforge.net/htmldoc/autocmd.html#autocmd-events
 or by running `:help autocmd-events`. If you want to include other events
 manually you can tweak the plugin by just following the example of what is
 already in place for `BufWritePost`, `CursorHold`, and the other events listed
-above (you'll find it easily by grepping the code). You can also raise an issue
+above (you'll find them easily by grepping the code). You can also raise an issue
 or pull request.
 
 Example usage
@@ -127,7 +137,7 @@ editors which are able to "live preview" raw CSS changes or HTML changes, but
 how about when you need to minify and closure-compile your JavaScript? And
 compile and minify your Sass files? And you're working off a remote server? And
 you'd really like to see the results updated in more than just Chrome? All of
-that is now possible, and I have to say, I it's pretty awesome.
+that is now possible, and I have to say, it's pretty awesome.
 
 ### Recompile Sass files on save
 This shows an example working tree and the contents of a two-line shell script,
@@ -232,20 +242,35 @@ to know when to reload your selected tabs in the browser.
 
 ### Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine
 
-Welcome to a place that must be very close to webdev Nirvana.  It is a _little_
-slow, but it's hell of a lot better than anything else I've seen.
+One file save, three browser reloads. Great stuff. It's a little hacky in that
+assumes you only want to refresh a single tab in each browser and that this tab
+is your current active tab in each browser.  I have a more elaborate solution
+for Chrome called [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
+but these will get the job done just fine.  It relies on AppleScript just like
+the above example, but uses a script called `refresh_all_browsers.applescript`,
+which looks like the following.
 
-It relies on AppleScript just like the above example. Just replace
-`refresh_safari.applescript` with `refresh_all_browsers.applescript`, which
-looks like the following. **Note: if you don't want to bother fiddling around
-with the [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
-extension you can create a similar block in your AppleScript file for Chrome as
-well.**
+> **.bufwritepost.vimhook** on the **remote-host** host
+>
+> ```sh
+> #!/bin/sh
+> # Note: assumes you have mac-laptop set up in your ~/.ssh/config file.
+> # Obviously it helps if you have password-less access configured with SSH
+> # certificates.
+> ssh mac-laptop 'osascript ~/refresh_all_browsers.applescript'
+> ```
 
+&nbsp;
 > **refresh_all_browsers.applescript**
 >
 > ```applescript
 > tell application "Safari"
+>     activate
+>     tell application "System Events" to keystroke "r" using command down
+> end tell
+> 
+> ```applescript
+> tell application "Chrome"
 >     activate
 >     tell application "System Events" to keystroke "r" using command down
 > end tell
