@@ -13,8 +13,8 @@ events, this is for you.
 
 In the next sections I'll describe how to install the **vim-hooks** plugin,
 give a bit of background on `autocommands` and events in Vim, and then explain
-in detail how use this plugin to hook arbitrary scripts into these events,
-which is the whole point of this plugin.
+in detail how to use this plugin to hook arbitrary scripts into these events,
+which is the whole point of this project.
 
 Installation
 ------------
