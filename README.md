@@ -141,9 +141,9 @@ that is now possible, and I have to say, it's pretty awesome.
 
 ### Recompile Sass files on save
 This shows an example working tree and the contents of a two-line shell script,
-`.recompile-styles.bufwritepost.vimhook` which calls the `sass` compiler.
-Remember that the ".234" part of the VimHook script can be number you want,
-or left off entirely.
+`.234.bufwritepost.vimhook` which calls the `sass` compiler.  Remember that
+the ".234" part of the VimHook script can be number you want, or left off
+entirely.
 
 ```
 .
@@ -190,7 +190,15 @@ An example working tree:
 > ```
 
 ### Reload Chrome tabs after recompiling Sass files on a remote machine
-Same as the above:
+This leverages a powerful feature of SSH called **port forwarding**, which
+allows you to &ndash; among other things &ndash; forward data from your remote machine back
+to your client machine, through an SSH tunnel. Here we will set things up such
+that requests made to port 7700 on the remote machine are forwarded to port
+7700 on the client machine. Remember that this is the port
+[chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh) is listening on
+to know when to reload your selected tabs in the browser.
+
+The first part of the setup is the same as before:
 > Install the [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
 > Chrome extension.  It requires some manual fiddling to get it up and running,
 > but once you do, any `GET /reload HTTP/1.1` requests to `localhost:7700` will
@@ -203,7 +211,11 @@ follows:
 ssh remote-host -R 7700:localhost:7700 # forwards requests on 7700 to your client's 7700
 ```
 
-> **.bufwritepost.vimhook**
+Create this `bufwritepost.vimhook` file which will recompile `style.scss`
+and then &ndash; via SSH port forwarding &ndash; make an HTTP request to
+your **client** machine listening on port 7700 to reload Chrome tabs.
+
+> **.bufwritepost.vimhook** (on the **remote-host**)
 >
 > ```sh
 > #!/bin/sh
@@ -212,26 +224,22 @@ ssh remote-host -R 7700:localhost:7700 # forwards requests on 7700 to your clien
 > ```
 
 ### Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine
-This leverages a powerful feature of SSH called **port forwarding**, which
-allows you to &ndash; among other things &ndash; forward data from your remote machine back
-to your client machine, through an SSH tunnel. Here we will set things up such
-that requests made to port 7700 on the remote machine are forwarded to port
-7700 on the client machine. Remember that this is the port
-[chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh) is listening on
-to know when to reload your selected tabs in the browser.
+This makes use of the above port-forwarding along with a piece of slightly
+hacky Applescript to reload the active tab in Safari.
 
-> **.bufwritepost.vimhook** on the **remote-host** host
+> **.bufwritepost.vimhook** (on the **remote-host**)
 >
 > ```sh
 > #!/bin/sh
 > # Note: assumes you have mac-laptop set up in your ~/.ssh/config file.
 > # Obviously it helps if you have password-less access configured with SSH
 > # certificates.
+> curl "localhost:7700/reload"
 > ssh mac-laptop 'osascript ~/refresh_safari.applescript'
 > ```
  
 &nbsp;
-> **refresh_safari.applescript** on the **mac-laptop** host
+> **refresh_safari.applescript** (on the **mac-laptop** host)
 > ```applescript
 > tell application "Safari"
 >     set sameURL to URL of current tab of front window
@@ -244,23 +252,9 @@ to know when to reload your selected tabs in the browser.
 
 One file save, three browser reloads. Great stuff. It's a little hacky in that
 assumes you only want to refresh a single tab in each browser and that this tab
-is your current active tab in each browser.  I have a more elaborate solution
-for Chrome called [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
-but these will get the job done just fine.  It relies on AppleScript just like
-the above example, but uses a script called `refresh_all_browsers.applescript`,
-which looks like the following.
+is your current active tab in each browser. In this example I am using the
+same piece of Applescript functionality to reload each browser tab:
 
-> **.bufwritepost.vimhook** on the **remote-host** host
->
-> ```sh
-> #!/bin/sh
-> # Note: assumes you have mac-laptop set up in your ~/.ssh/config file.
-> # Obviously it helps if you have password-less access configured with SSH
-> # certificates.
-> ssh mac-laptop 'osascript ~/refresh_all_browsers.applescript'
-> ```
-
-&nbsp;
 > **refresh_all_browsers.applescript**
 >
 > ```applescript
@@ -269,7 +263,6 @@ which looks like the following.
 >     tell application "System Events" to keystroke "r" using command down
 > end tell
 > 
-> ```applescript
 > tell application "Chrome"
 >     activate
 >     tell application "System Events" to keystroke "r" using command down
@@ -279,6 +272,18 @@ which looks like the following.
 >     activate
 >     tell application "System Events" to keystroke "r" using command down
 > end tell
+> ```
+
+I then simply configure `bufwritepost.vimhook` to run this script over SSH:
+
+> **.bufwritepost.vimhook** on the **remote-host** host
+>
+> ```sh
+> #!/bin/sh
+> # Note: assumes you have mac-laptop set up in your ~/.ssh/config file.
+> # Obviously it helps if you have password-less access configured with SSH
+> # certificates.
+> ssh mac-laptop 'osascript ~/refresh_all_browsers.applescript'
 > ```
 
 ### Log editing events for future analytics
@@ -340,3 +345,6 @@ Upcoming features
   Like sometimes you're just editing the README of your project and don't really
   want to trigger all those hooks.
 - Asynchronous execution of hook files.
+- Allow VimHook scripts to end in arbitrary extensions so that users can
+  easily get the syntax highlighting, etc. that they expect when editing
+  files in different languages.
