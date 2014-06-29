@@ -3,11 +3,11 @@ let s:extensionSpecificHookFiles = {}
 let s:fileSpecificHookFiles = {}
 let s:shouldEnableHooks = 1
 
-function! StopExecutingHooks()
+function! s:stopExecutingHooks()
     let s:shouldEnableHooks = 0
 endfunction
 
-function! StartExecutingHooks()
+function! s:startExecutingHooks()
     let s:shouldEnableHooks = 1
 endfunction
 
@@ -20,6 +20,8 @@ function! s:shouldExecuteHooks()
         return 0
     endif
 endfunction
+
+let s:ignoreableFilesRegex = '\vswp$'
 
 function! s:clearHookFiles()
     let s:globalHookFiles = {}
@@ -50,27 +52,28 @@ function! s:addHookFile(dict, eventname, primaryKey, hookfile)
 endfunction
 
 function! s:findHookFiles()
-    let cwd = fnamemodify('.', ':p')
     " Clear out the old dictionaries of hook files if they exist.
     call s:clearHookFiles()
 
     let files = split(glob("*") . "\n" . glob(".*") . "\n" . glob("~/.vimhooks/*") . "\n" . glob("~/.vimhooks/.*"), "\n")
     for hookfile in files
-        " Matches filenames that end with .vimhook. Uses a very-magic regex.
-        " See :help magic.
-        if hookfile =~ '\v\.vimhook$'
+        " Matches filenames that have the ".vimhook" string anywhere inside
+        " them, except for those that match the "ignoreable" regex (i.e.,
+        " *.swp files). Uses a very-magic regex. See :help magic.
+        if hookfile =~ '\v\.vimhook' && hookfile !~ s:ignoreableFilesRegex
             if hookfile =~ '\v^\.'
                 " Hidden file case
                 "   .bufwritepost.vimhook
-                "   .123.bufwritepost.vimhook
-                "   .bufwritepost.scss.vimhook
+                "   .123.bufwritepost.vimhook.sh
+                "   .bufwritepost.scss.vimhook.sh
                 "
-                " This regex matches [.sortkey].eventname[.ext].vimhook.  This
+                " This regex matches
+                " [.sortkey].eventname[.ext].vimhook[.trailing.chars].  This
                 " match will put the entire hookfile in the 0th position,
                 " "sortkey" in the 1st position, "eventname" in the 2nd
-                " position, "ext" in the 3rd position.
+                " position, and "ext" in the 3rd position.
                 let hiddenFileMatches =  matchlist(hookfile, '\v^\.?(\d*)\.(\a+)\.?(.*)\.vimhook')
-                " Do not actually need this: let sortkey = get(hiddenFileMatches, 1, "")
+
                 let eventname = get(hiddenFileMatches, 2, "")
                 let ext = get(hiddenFileMatches, 3, "")
 
@@ -82,17 +85,19 @@ function! s:findHookFiles()
                     call s:addHookFile(s:globalHookFiles, eventname, "", hookfile)
                 endif
 
-            elseif hookfile =~ '\vvimhook$'
-                " Normal file case. Intended for one user wants to only
-                " react to events associated with a single file.
+            else
+                " Normal (i.e., not hidden) file case. Intended for when
+                " user wants to only react to events associated with a
+                " single file.
                 "   styles.scss.bufwritepost.vimhook
                 "   app.coffee.bufwritepost.vimhook
                 "   index.html.bufwritepost.vimhook
                 "
-                " This regex matches [filename.ext].eventname.vimhook. The match
-                " will put the entire hookfile in the 0th position, the
-                " desired filename to react to in the 1st position and
-                " "eventname" in the 2nd position.
+                " This regex matches
+                " [filename.ext].eventname.vimhook[.trailing.chars]. The
+                " match will put the entire hookfile in the 0th position,
+                " the desired filename to react to in the 1st position, and
+                " the eventname in the 2nd position.
                 let singleFileMatches = matchlist(hookfile, '\v^(.+)\.(\a+)\.vimhook')
                 let filename = get(singleFileMatches, 1, "")
                 let eventname = get(singleFileMatches, 2, "")
@@ -103,26 +108,36 @@ function! s:findHookFiles()
     endfor
 endfunction
 
-function! s:executeHookFiles(eventname)
+function! s:executeHookFiles(...)
     if !s:shouldExecuteHooks()
-        " Return early
+        " Return early if hooks have been manually disabled via :StopExecutingHooks
         return
     endif
+    " Accepts a variable number of event names and executes the hook files
+    " corresponding to each. This will typically be called with a single
+    " event, unless the user manually calls :ExecuteHookFiles Event1, Event2.
+    " As a reminder, 
+    " a:0 => number of extra args
+    " a:1 => first extra arg
+    " a:2 => second extra arg
+    " a:000 => all the extra args in a List
 
-    let eventname = tolower(a:eventname)
-    " Get the filename without all the path stuff
-    let filename = get(matchlist(getreg('%'), '\v([^/]+)$'), 1, "")
-    let ext =  get(matchlist(filename, '\v\.(\a+)$'), 1, "")
+    for eventname in a:000
+        let eventname = tolower(eventname)
+        " Get the filename without all the path stuff
+        let filename = get(matchlist(getreg('%'), '\v([^/]+)$'), 1, "")
+        let ext =  get(matchlist(filename, '\v\.(\a+)$'), 1, "")
 
-    if has_key(s:fileSpecificHookFiles, filename)
-        call s:executeHookFilesByEvent(s:fileSpecificHookFiles[filename], eventname)
-    endif
+        if has_key(s:fileSpecificHookFiles, filename)
+            call s:executeHookFilesByEvent(s:fileSpecificHookFiles[filename], eventname)
+        endif
 
-    if has_key(s:extensionSpecificHookFiles, ext)
-        call s:executeHookFilesByEvent(s:extensionSpecificHookFiles[ext], eventname)
-    endif
+        if has_key(s:extensionSpecificHookFiles, ext)
+            call s:executeHookFilesByEvent(s:extensionSpecificHookFiles[ext], eventname)
+        endif
 
-    call s:executeHookFilesByEvent(s:globalHookFiles, eventname)
+        call s:executeHookFilesByEvent(s:globalHookFiles, eventname)
+    endfor
 endfunction
 
 function! s:executeHookFilesByEvent(dict, eventname)
@@ -160,3 +175,15 @@ aug END
 
 " Immediately run the s:findHookFiles function.
 call s:findHookFiles()
+
+" Define commands
+" Find all hook files in the current working directory
+command! -nargs=0 FindHookFiles call s:findHookFiles()
+" Manually execute hook files corresponding to whichever events are given as
+" the arguments to this function. Will autocomplete event names. Example:
+" :ExecuteHookFiles BufWritePost VimLeave. Currently only executes the
+" global hook files.
+command! -nargs=+ -complete=event ExecuteHookFiles call s:executeHookFiles(<f-args>)
+
+command! -nargs=0 StopExecutingHooks call s:stopExecutingHooks()
+command! -nargs=0 StartExecutingHooks call s:startExecutingHooks()
