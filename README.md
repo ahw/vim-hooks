@@ -1,7 +1,7 @@
 Vim Hooks
 =========
 This is a Vim plugin that looks for specially-named scripts in your current
-working directory like `.bufwritepost.vimhook` or `.cursorhold.vimhook` and
+working directory like `.bufwritepost.vimhook.rb` or `.cursorhold.vimhook.sh` and
 executes those scripts whenever &ndash; in this example &ndash; Vim fires the
 `BufWritePost` and `CursorHold` `autocmd` events, respectively. I wrote this
 plugin specifically to ease the write-save-switch-reload pain of web
@@ -53,7 +53,7 @@ three flavors of VimHook scripts:
    specified in the VimHook filename. For example, you could create a VimHook
    script which is executed only when `*.js` files are changed.
 3. VimHook scripts that are **file-specific**. These are executed only when the
-   appropriate event is fired in Vim _and_ the filename of the current buffer
+   appropriate event is fired in Vim _and_ the filename of the current
    buffer is exactly that which is specified in the VimHook filename. For
    example, you could create a VimHook script which is executed only when
    `some-special-file.html` changes.
@@ -67,23 +67,29 @@ execution later.
    
 Global VimHooks
 ---------------
-The format of global VimHook filenames is `[.sortkey].eventname.vimhook`,
+_A note on notation: I'm using the UNIX-style convention of enclosing
+optional parts of a pattern in square brackets and representing "blobs" with
+`*`. The `.` should be taken literally._
+
+The format of global VimHook filenames is `[.sortkey].eventname.vimhook[.*]`,
 where `sortkey` is optional and can be whatever integer you want and
-`eventname` is any valid Vim `autocmd` event (case-insensitive). The
-filename must end in `.vimhook` (for now anyway; I'm considering changing
-the naming convention to accomodate some other use cases).  If you would
-like to have multiple scripts reacting to the same `eventname` simply name
-the files using a different `sortkey` for each. When there are multiple
-VimHook scripts with the same `eventname` they will be executed serially
-according to the lexographic ordering of their filenames.  Thus, you can
-choose your `sortkey`s strategically if you have several scripts which need
-to run in a specific order (for example, `000.bufwritepost.vimhook`,
-`100.bufwritepost.vimhook`).
+`eventname` is any valid Vim `autocmd` event (case-insensitive). You are
+free to add any arbitrary stuff to the end of the filename, though I think
+it looks clean if you simply add the normal extension corresponding to the
+language your script is in and leave it at that.
+
+If you would like to have multiple scripts reacting to the same `eventname`
+simply name the files using a different `sortkey` for each. When there are
+multiple VimHook scripts with the same `eventname` they will be executed
+serially according to the lexographic ordering of their filenames.  Thus,
+you can choose your `sortkey`s strategically if you have several scripts
+which need to run in a specific order (for example,
+`000.bufwritepost.vimhook.sh`, `100.bufwritepost.vimhook.sh`).
 
 Extension-specific VimHooks
 --------------------------
 The format of extension-specific VimHook filenames is
-`[.sortkey].eventname.ext.vimhook`, where `sortkey` is optional and can be
+`[.sortkey].eventname.ext.vimhook[.*]`, where `sortkey` is optional and can be
 whatever integer you want, `eventname` is any valid Vim `autocmd` event
 (case-insensitive), and `ext` is whatever filename extension you want to
 react to. For example, `.bufwritepost.scss.vimhook` will only be executed
@@ -92,13 +98,13 @@ when the `BufWritePost` event is fired on `*.scss` files.
 File-specific VimHooks
 --------------------------
 The format of file-specific VimHook filenames is
-`filename.eventname.vimhook`, where `filename` is the full name you want to
+`filename.eventname.vimhook[.*]`, where `filename` is the full name you want to
 react to and `eventname` is any valid Vim `autocmd` event
 (case-insensitive). In other words, you simply need to append
-`eventname.vimhook` to whatever file you want the hook to be associated
-with. For example, the VimHook named `README.md.bufwritepost.vimhook` will
+`eventname.vimhook[.*]` to whatever file you want the hook to be associated
+with. For example, the VimHook named `README.md.bufwritepost.vimhook.py` will
 only be executed when the `BufWritePost` event is fired from the `README.md`
-buffer; the VimHook named `app.js.bufenter.vimhook`  will only be executed
+buffer; the VimHook named `app.js.bufenter.vimhook.py`  will only be executed
 when the `BufEnter` evente is fired from the `app.js` buffer.
 
 
@@ -141,7 +147,7 @@ that is now possible, and I have to say, it's pretty awesome.
 
 ### Recompile Sass files on save
 This shows an example working tree and the contents of a two-line shell script,
-`.234.bufwritepost.vimhook` which calls the `sass` compiler.  Remember that
+`.234.bufwritepost.vimhook.sh` which calls the `sass` compiler.  Remember that
 the ".234" part of the VimHook script can be number you want, or left off
 entirely.
 
@@ -150,10 +156,10 @@ entirely.
 ├── style.scss
 ├── style.css
 ├── _colors.scss
-└── .234.bufwritepost.vimhook
+└── .234.bufwritepost.vimhook.sh
 ```
 
-> **.234.bufwritepost.vimhook**
+> **.234.bufwritepost.vimhook.sh**
 >
 > ```sh
 > #!/bin/sh
@@ -171,7 +177,7 @@ works on Mac OSX, see the examples using AppleScript further on down.
 An example working tree:
 ```
 .
-├── .bufwritepost.vimhook
+├── .bufwritepost.vimhook.sh
 ├── _colors.scss
 ├── src
 │   ├── app.js
@@ -181,7 +187,7 @@ An example working tree:
 └── style.scss
 ```
 
-> **.bufwritepost.vimhook**
+> **.bufwritepost.vimhook.sh**
 >
 > ```sh
 > #!/bin/sh
@@ -211,11 +217,11 @@ follows:
 ssh remote-host -R 7700:localhost:7700 # forwards requests on 7700 to your client's 7700
 ```
 
-Create this `bufwritepost.vimhook` file which will recompile `style.scss`
+Create this `bufwritepost.vimhook.sh` file which will recompile `style.scss`
 and then &ndash; via SSH port forwarding &ndash; make an HTTP request to
 your **client** machine listening on port 7700 to reload Chrome tabs.
 
-> **.bufwritepost.vimhook** (on the **remote-host**)
+> **.bufwritepost.vimhook.sh** (on the **remote-host**)
 >
 > ```sh
 > #!/bin/sh
@@ -227,7 +233,7 @@ your **client** machine listening on port 7700 to reload Chrome tabs.
 This makes use of the above port-forwarding along with a piece of slightly
 hacky Applescript to reload the active tab in Safari.
 
-> **.bufwritepost.vimhook** (on the **remote-host**)
+> **.bufwritepost.vimhook.sh** (on the **remote-host**)
 >
 > ```sh
 > #!/bin/sh
@@ -274,9 +280,9 @@ same piece of Applescript functionality to reload each browser tab:
 > end tell
 > ```
 
-I then simply configure `bufwritepost.vimhook` to run this script over SSH:
+I then simply configure `bufwritepost.vimhook.sh` to run this script over SSH:
 
-> **.bufwritepost.vimhook** on the **remote-host** host
+> **.bufwritepost.vimhook.sh** on the **remote-host** host
 >
 > ```sh
 > #!/bin/sh
@@ -290,13 +296,13 @@ I then simply configure `bufwritepost.vimhook` to run this script over SSH:
 
 My only non-webdev example. I don't know, maybe you're into collecting data.
 This will log out timestamps each time you enter and exit a new buffer in
-Vim. Your working tree is below. Note that `.bufleave.vimhook` is sym-linked
-to `.bufenter.vimhook` so the same script is used to handle two events.
+Vim. Your working tree is below. Note that `.bufleave.vimhook.sh` is sym-linked
+to `.bufenter.vimhook.sh` so the same script is used to handle two events.
 
 ```
 .
-├── .bufenter.vimhook
-├── .bufleave.vimhook -> .bufenter.vimhook # this is a symlink
+├── .bufenter.vimhook.sh
+├── .bufleave.vimhook.sh -> .bufenter.vimhook.sh # this is a symlink
 ├── _colors.scss
 ├── src
 │   ├── app.js
@@ -306,9 +312,9 @@ to `.bufenter.vimhook` so the same script is used to handle two events.
 └── style.scss
 ```
 
-> **.bufenter.vimhook**
+> **.bufenter.vimhook.sh**
 >
-> ```bash
+> ```sh
 > #!/bin/sh
 > FILENAME=$1
 > EVENTNAME=$2
