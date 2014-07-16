@@ -351,6 +351,7 @@ Upcoming features
   Like sometimes you're just editing the README of your project and don't really
   want to trigger all those hooks.
 - Asynchronous execution of hook files.
-- Allow VimHook scripts to end in arbitrary extensions so that users can
+- ~~Allow VimHook scripts to end in arbitrary extensions so that users can
   easily get the syntax highlighting, etc. that they expect when editing
-  files in different languages.
+  files in different languages.~~
+- Documentation.
