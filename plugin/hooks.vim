@@ -21,7 +21,8 @@ function! s:shouldExecuteHooks()
     endif
 endfunction
 
-let s:ignoreableFilesRegexList = ['\vswp$', '\v^/\.\.?$']
+" Ignore swap files, the . and .. entries, and the ~/.vimhooks/ directory
+let s:ignoreableFilesRegexList = ['\vswp$', '\v^/\.\.?$', '\v\.vimhooks']
 
 function! s:isIgnoreable(name)
     " This function expects the name argument to be the base name of a file.
@@ -43,12 +44,12 @@ endfunction
 function! s:addHookFile(dict, eventname, primaryKey, hookfile)
     if len(a:primaryKey)
         if !has_key(a:dict, a:primaryKey)
-            " Add to the dictionary of file-specific hooks
+            " Add to the dictionary of file-specific or extension-specific hooks
             let a:dict[a:primaryKey] = {}
         endif
 
         if !has_key(a:dict[a:primaryKey], a:eventname)
-            " Add to the dictionary of extension-specific hooks
+            " Add to the dictionary of file-specific or extension-specific hooks
             let a:dict[a:primaryKey][a:eventname] = []
         endif
 
@@ -197,7 +198,7 @@ aug HookGroup
 aug END
 
 " Immediately run the s:findHookFiles function.
-call s:findHookFiles()
+call <SID>findHookFiles()
 
 " Define commands
 " Find all hook files in the current working directory
