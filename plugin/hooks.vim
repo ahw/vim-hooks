@@ -21,7 +21,18 @@ function! s:shouldExecuteHooks()
     endif
 endfunction
 
-let s:ignoreableFilesRegex = '\vswp$'
+let s:ignoreableFilesRegexList = ['\vswp$', '\v^/\.\.?$']
+
+function! s:isIgnoreable(name)
+    " This function expects the name argument to be the base name of a file.
+    " It will not work correctly if we pass in an absolute path to a file.
+    for regex in s:ignoreableFilesRegexList
+        if a:name =~ regex
+            return 1
+        endif
+    endfor
+    return 0
+endfunction
 
 function! s:clearHookFiles()
     let s:globalHookFiles = {}
@@ -32,10 +43,12 @@ endfunction
 function! s:addHookFile(dict, eventname, primaryKey, hookfile)
     if len(a:primaryKey)
         if !has_key(a:dict, a:primaryKey)
+            " Add to the dictionary of file-specific hooks
             let a:dict[a:primaryKey] = {}
         endif
 
         if !has_key(a:dict[a:primaryKey], a:eventname)
+            " Add to the dictionary of extension-specific hooks
             let a:dict[a:primaryKey][a:eventname] = []
         endif
 
@@ -43,6 +56,7 @@ function! s:addHookFile(dict, eventname, primaryKey, hookfile)
         call sort(add(a:dict[a:primaryKey][a:eventname], a:hookfile))
     else
         if !has_key(a:dict, a:eventname)
+            " Add to the dictionary of global hooks
             let a:dict[a:eventname] = []
         endif
 
@@ -57,11 +71,12 @@ function! s:findHookFiles()
 
     let files = split(glob("*") . "\n" . glob(".*") . "\n" . glob("~/.vimhooks/*") . "\n" . glob("~/.vimhooks/.*"), "\n")
     for hookfile in files
+        let baseName = get(matchlist(hookfile, '\v[^/]+$'), 0, "")
         " Matches filenames that have the ".vimhook" string anywhere inside
         " them, except for those that match the "ignoreable" regex (i.e.,
         " *.swp files). Uses a very-magic regex. See :help magic.
-        if hookfile =~ '\v\.vimhook' && hookfile !~ s:ignoreableFilesRegex
-            if hookfile =~ '\v^\.'
+        if baseName =~ '\v\.vimhook' && !s:isIgnoreable(baseName)
+            if baseName =~ '\v^\.'
                 " Hidden file case
                 "   .bufwritepost.vimhook
                 "   .123.bufwritepost.vimhook.sh
@@ -72,7 +87,7 @@ function! s:findHookFiles()
                 " match will put the entire hookfile in the 0th position,
                 " "sortkey" in the 1st position, "eventname" in the 2nd
                 " position, and "ext" in the 3rd position.
-                let hiddenFileMatches =  matchlist(hookfile, '\v^\.?(\d*)\.(\a+)\.?(.*)\.vimhook')
+                let hiddenFileMatches =  matchlist(baseName, '\v^\.?(\d*)\.(\a+)\.?(.*)\.vimhook')
 
                 let eventname = get(hiddenFileMatches, 2, "")
                 let ext = get(hiddenFileMatches, 3, "")
@@ -98,7 +113,7 @@ function! s:findHookFiles()
                 " match will put the entire hookfile in the 0th position,
                 " the desired filename to react to in the 1st position, and
                 " the eventname in the 2nd position.
-                let singleFileMatches = matchlist(hookfile, '\v^(.+)\.(\a+)\.vimhook')
+                let singleFileMatches = matchlist(baseName, '\v^(.+)\.(\a+)\.vimhook')
                 let filename = get(singleFileMatches, 1, "")
                 let eventname = get(singleFileMatches, 2, "")
 
@@ -145,7 +160,15 @@ function! s:executeHookFilesByEvent(dict, eventname)
         for hookfile in a:dict[a:eventname]
             if getfperm(hookfile) =~ '\v^..x'
                 echom "[vim-hooks] Executing hookfile " . hookfile . " after event " . a:eventname
-                execute 'silent !./' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:eventname)
+                if hookfile !~ '\v^/'
+                    " If the hookfile is in the current working directory
+                    " then prepend a ./ to it to allow execution. If the
+                    " hookfile name starts with a leading slash then do
+                    " nothing.
+                    let hookfile = './' . hookfile
+                endif
+
+                execute 'silent !' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:eventname)
                 redraw!
             else
                 echohl WarningMsg
@@ -178,12 +201,12 @@ call s:findHookFiles()
 
 " Define commands
 " Find all hook files in the current working directory
-command! -nargs=0 FindHookFiles call s:findHookFiles()
+command! -nargs=0 FindHookFiles call <SID>findHookFiles()
 " Manually execute hook files corresponding to whichever events are given as
 " the arguments to this function. Will autocomplete event names. Example:
 " :ExecuteHookFiles BufWritePost VimLeave. Currently only executes the
 " global hook files.
-command! -nargs=+ -complete=event ExecuteHookFiles call s:executeHookFiles(<f-args>)
+command! -nargs=+ -complete=event ExecuteHookFiles call <SID>executeHookFiles(<f-args>)
 
-command! -nargs=0 StopExecutingHooks call s:stopExecutingHooks()
-command! -nargs=0 StartExecutingHooks call s:startExecutingHooks()
+command! -nargs=0 StopExecutingHooks call <SID>stopExecutingHooks()
+command! -nargs=0 StartExecutingHooks call <SID>startExecutingHooks()

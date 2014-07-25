@@ -1,20 +1,19 @@
 Vim Hooks
 =========
-This is a Vim plugin that looks for specially-named scripts in your current
-working directory like `.bufwritepost.vimhook.rb` or `.cursorhold.vimhook.sh` and
-executes those scripts whenever &ndash; in this example &ndash; Vim fires the
-`BufWritePost` and `CursorHold` `autocmd` events, respectively. I wrote this
-plugin specifically to ease the write-save-switch-reload pain of web
-development, and my most salient use case so far is the ability to auto-reload
-Chrome, Firefox, and Safari tabs after a single file save (`:w`) in Vim, though
-I have a feeling there are a lot of other interesting use cases out there. If
-you've ever wanted an easy way of hooking arbitrary shell scripts into Vim
-events, this is for you.
+This is a Vim plugin that looks for scripts in `~/.vimhooks/`, and your
+current working directory, that have names like `.bufwritepost.vimhook.rb`
+or `.cursorhold.vimhook.sh` and executes those scripts whenever &ndash; in
+this example &ndash; Vim fires the `BufWritePost` and `CursorHold` `autocmd`
+events, respectively. I wrote this plugin specifically to ease the
+write-save-switch-reload pain of web development, and my most salient use
+case so far is the ability to auto-reload Chrome, Firefox, and Safari tabs
+after a single file save (`:w`) in Vim, though I have a feeling there are a
+lot of other interesting use cases out there. If you've ever wanted an easy
+way of hooking arbitrary shell scripts into Vim events, this is for you.
 
 In the next sections I'll describe how to install the **vim-hooks** plugin,
 give a bit of background on `autocommands` and events in Vim, and then explain
-in detail how to use this plugin to hook arbitrary scripts into these events,
-which is the whole point of this project.
+in detail how to use **vim-hooks**.
 
 Installation
 ------------
