@@ -24,11 +24,11 @@ endfunction
 " Ignore swap files, the . and .. entries, and the ~/.vimhooks/ directory
 let s:ignoreableFilesRegexList = ['\vswp$', '\v^/\.\.?$', '\v\.vimhooks']
 
-function! s:isIgnoreable(name)
-    " This function expects the name argument to be the base name of a file.
+function! s:isIgnoreable(baseName)
+    " This function expects the baseName argument to be the base name of a file.
     " It will not work correctly if we pass in an absolute path to a file.
     for regex in s:ignoreableFilesRegexList
-        if a:name =~ regex
+        if a:baseName =~ regex
             return 1
         endif
     endfor
@@ -181,6 +181,42 @@ function! s:executeHookFilesByEvent(dict, eventname)
     endif
 endfunction
 
+function! s:listVimHooks()
+    echo "Global VimHooks"
+    echo "---------------"
+    for eventName in keys(s:globalHookFiles)
+        for hookFile in s:globalHookFiles[eventName]
+            echo s:pad(eventName, 15) . ": " . hookFile
+        endfor
+    endfor
+
+    echo "\n"
+    echo "Extension-specific VimHooks"
+    echo "---------------------------"
+    for ext in keys(s:extensionSpecificHookFiles)
+        for eventName in keys(s:extensionSpecificHookFiles[ext])
+            for hookFile in s:extensionSpecificHookFiles[ext][eventName]
+                echo s:pad(ext, 4) . ": " . s:pad(eventName, 15) . ": " . hookFile
+            endfor
+        endfor
+    endfor
+
+    echo "\n"
+    echo "Filename-specific VimHooks"
+    echo "--------------------------"
+    for name in keys(s:fileSpecificHookFiles)
+        for eventName in keys(s:fileSpecificHookFiles[name])
+            for hookFile in s:fileSpecificHookFiles[name][eventName]
+                echo s:pad(name, 20) . ": " . s:pad(eventName, 15) . ": " . hookFile
+            endfor
+        endfor
+    endfor
+endfunction
+
+function! s:pad(s,amt)
+    return a:s . repeat(' ',a:amt - len(a:s))
+endfunction
+
 "Create an autocmd group
 aug HookGroup
     "Clear the augroup. Otherwise Vim will combine them.
@@ -200,14 +236,18 @@ aug END
 " Immediately run the s:findHookFiles function.
 call <SID>findHookFiles()
 
-" Define commands
 " Find all hook files in the current working directory
 command! -nargs=0 FindHookFiles call <SID>findHookFiles()
+
 " Manually execute hook files corresponding to whichever events are given as
 " the arguments to this function. Will autocomplete event names. Example:
 " :ExecuteHookFiles BufWritePost VimLeave. Currently only executes the
 " global hook files.
 command! -nargs=+ -complete=event ExecuteHookFiles call <SID>executeHookFiles(<f-args>)
 
+" Manually start and stop executing hooks
 command! -nargs=0 StopExecutingHooks call <SID>stopExecutingHooks()
 command! -nargs=0 StartExecutingHooks call <SID>startExecutingHooks()
+
+" Pretty-print a list of all the vimhook dictionaries for debugging
+command! -nargs=0 ListVimHooks call <SID>listVimHooks()
