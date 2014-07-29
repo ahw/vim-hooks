@@ -1,0 +1,126 @@
+*vim-hooks.txt*  Hook shell scripts into vim autocommand events
+
+Author:  Andy Hallagan <https://github.com/ahw/>
+Repo:    https://github.com/ahw/vim-hooks
+License: MIT
+
+INTRODUCTION                                    *vim-hooks*
+
+Hook arbitrary shell scripts into Vim's |:autocmd| events.  This plugin looks
+for specially-named scripts in your current working directory (as well as
+~/.vimhooks/) that have names like .bufwritepost.vimhook.rb or
+.cursorhold.vimhook.sh and executes those scripts whenever -- in this example
+-- Vim fires the |BufWritePost| and |CursorHold| |:autocmd| events,
+respectively.
+
+The plugin relies on specific filename patterns in order to figure out which
+scripts to execute after a given |:autocmd| event. I'll try to refer to these
+scripts consistently as "VimHook" scripts throughout, but sometimes I call
+them "hook files" or just "hooks." There are three flavors of VimHook scripts:
+global, extension-specific, and filename-specific VimHooks.
+
+TYPES OF VIM-HOOK SCRIPTS                       *vim-hook-script-types*
+
+Global VimHooks ~
+
+Global VimHook scripts are executed every time the appropriate event is
+triggered in Vim, regardless of what file you're editing.
+  
+Extension-specific VimHooks ~
+
+Extension-specific VimHook scripts are executed every time the appropriate
+event is triggered in Vim and the filename of the current buffer has an
+extension corresponding to that which is specified in the VimHook filename.
+For example, you could create a VimHook script which is executed only when
+*.js files are changed.
+
+File-specific VimHooks ~
+
+File-specific VimHook scripts are executed only when the appropriate event is
+fired in Vim and the filename of the current buffer is exactly that which is
+specified in the VimHook filename. For example, you could create a VimHook
+script which is executed only when some-special-file.html changes. Each
+script is passed the name of the current buffer and the triggered event name
+as command-line arguments. So in a Bash shell script you could, for example,
+use $1 and $2 to access these values (see example usage).
+
+NAMING CONVENTIONS                              *vim-hooks-naming-conventions*
+
+A note on notation: I'm using the UNIX-style convention of enclosing optional
+parts of a pattern in square brackets and representing "blobs" with '*'. The
+'.' should be taken literally.
+
+Global VimHooks ~
+
+The format of global VimHook filenames is '[.sortkey].eventname.vimhook[.*]',
+where 'sortkey' is optional and can be whatever integer you want and
+'eventname' is any valid Vim |:autocmd| event (case-insensitive). You are
+free to add any arbitrary stuff to the end of the filename, though I think
+it looks clean if you simply add the normal extension corresponding to the
+language your script is in and leave it at that. Example valid global VimHook
+names include '.bufwritepost.vimhook.sh' and '.vimleave.vimhook.py'.
+
+If you would like to have multiple scripts reacting to the same 'eventname'
+simply name the files using a different 'sortkey' for each. When there are
+multiple VimHook scripts with the same 'eventname' they will be executed
+serially according to the lexographic ordering of their filenames.  Thus,
+you can choose your 'sortkey's strategically if you have several scripts
+which need to run in a specific order (for example,
+'000.bufwritepost.vimhook.sh', '100.bufwritepost.vimhook.sh').
+
+Extension-specific VimHooks ~
+
+The format of extension-specific VimHook filenames is
+'[.sortkey].eventname.ext.vimhook[.*]', where 'sortkey' is optional and can be
+whatever integer you want, 'eventname' is any valid Vim |:autocmd| event
+(case-insensitive), and 'ext' is whatever filename extension you want to
+react to. For example, '.bufwritepost.scss.vimhook' will only be executed
+when the 'BufWritePost' event is fired on '*.scss' files.
+
+File-specific VimHooks ~
+
+The format of file-specific VimHook filenames is
+'filename.eventname.vimhook[.*]', where 'filename' is the full name you want to
+react to and 'eventname' is any valid Vim |:autocmd| event
+(case-insensitive). In other words, you simply need to append
+'eventname.vimhook[.*]' to whatever file you want the hook to be associated
+with. For example, the VimHook named 'README.md.bufwritepost.vimhook.py' will
+only be executed when the 'BufWritePost' event is fired from the 'README.md'
+buffer; the VimHook named 'app.js.bufenter.vimhook.py'  will only be executed
+when the 'BufEnter' evente is fired from the 'app.js' buffer.
+
+COMMANDS                                        *vim-hooks-commands*
+
+                                                *:ListVimHooks*
+:ListVimHooks           List all of the hook files found in the current
+                        working directory as well as ~/.vimhooks/. This
+                        command prints out separate sections for global-
+                        extension-specific, and filename-specific hooks.
+
+:FindHookFiles          This command clears out any previously-discovered
+                        VimHook scripts and re-scans the current working
+                        directory (./) as well as ~/.vimhooks/ for hook files.
+                        This performs exactly the same function as the
+                        VimHooks plugin does automatically when you start Vim.
+
+                                                *:ExecuteHookFiles*
+:ExecuteHookFiles [arguments]
+                        Manually execute global hook files corresponding to
+                        whichever events are given as the arguments to this
+                        function.  Will autocomplete event names. Example
+                        usage: |:ExecuteHookFiles| BufWritePost VimLeave.
+                        Currently only executes the global hook files.
+
+                                                *:StopExecutingHooks*
+:StopExecutingHooks     Will stop executing any previously-discovered VimHook
+                        scripts for all events. To resume automatic execution
+                        of VimHook scripts run |:StartExecutingHooks|. Running
+                        this command multiple times in a row is the same as
+                        just running it once.
+
+                                                *:StartExecutingHooks*
+:StartExecutingHooks    Will start executing any previously-discovered VimHook
+                        scripts for all events. To pause automatic execution
+                        of VimHook scripts run |:StopExecutingHooks|. Running
+                        this command multiple times in a row is the same as
+                        just running it once.

@@ -354,4 +354,4 @@ Upcoming features
 - ~~Allow VimHook scripts to end in arbitrary extensions so that users can
   easily get the syntax highlighting, etc. that they expect when editing
   files in different languages.~~
-- Documentation.
+- ~~Documentation.~~
