@@ -107,7 +107,6 @@ only be executed when the `BufWritePost` event is fired from the `README.md`
 buffer; the VimHook named `app.js.bufenter.vimhook.py`  will only be executed
 when the `BufEnter` evente is fired from the `app.js` buffer.
 
-
 What autocmd events are exposed in by Vim Hooks?
 ------------------------------------------------
 Currently, **vim-hooks** responds to
@@ -133,17 +132,29 @@ already in place for `BufWritePost`, `CursorHold`, and the other events listed
 above (you'll find them easily by grepping the code). You can also raise an issue
 or pull request.
 
+Permissions
+------------
+Ensure that your VimHook scripts have the "execute" flag set.
+
+```
+$ chmod 755 FILENAME
+```
+
 Example usage
 -------------
 As mentioned previously, this plugin was motivated by the pain of the
 save-switch-reload cycle between editor and browser that eats up so much time
 in web development. The examples that follow show off how quickly you can
-exploit this plugin to speed up that iteration time. I have found a number of
-editors which are able to "live preview" raw CSS changes or HTML changes, but
-how about when you need to minify and closure-compile your JavaScript? And
-compile and minify your Sass files? And you're working off a remote server? And
-you'd really like to see the results updated in more than just Chrome? All of
-that is now possible, and I have to say, it's pretty awesome.
+exploit this plugin to speed up that iteration time. While I have found a
+number of editors which are able to "live preview" raw CSS changes or HTML
+changes, their capabilities almost always end there. How about when you need
+to minify and closure-compile your JavaScript? And compile and minify your
+Sass files? Maybe you need to copy them to another place in the filesystem.
+Maybe you're working off a remote server. Maybe &ndash; probably &ndash;
+you'd really like to see the results updated in more than just Chrome. If
+you can write the automation logic to do these things into a script,
+VimHooks will provide the mechanism for hooking that automation into any of
+the many Vim `autocmd` events.
 
 ### Recompile Sass files on save
 This shows an example working tree and the contents of a two-line shell script,
@@ -192,17 +203,19 @@ An example working tree:
 > ```sh
 > #!/bin/sh
 > sass style.scss style.css
+> # In a nutshell, the Chrome extension mentioned above listens for these
+> # requests and reloads the appropriate tabs when they occur.
 > curl "localhost:7700/reload"
 > ```
 
 ### Reload Chrome tabs after recompiling Sass files on a remote machine
 This leverages a powerful feature of SSH called **port forwarding**, which
-allows you to &ndash; among other things &ndash; forward data from your remote machine back
-to your client machine, through an SSH tunnel. Here we will set things up such
-that requests made to port 7700 on the remote machine are forwarded to port
-7700 on the client machine. Remember that this is the port
-[chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh) is listening on
-to know when to reload your selected tabs in the browser.
+allows you to forward data from your remote machine back to your client
+machine, through an SSH tunnel. Here we will set things up such that
+requests made to port 7700 on the remote machine are forwarded to port 7700
+on the client machine. Remember that this is the port
+[chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh) is listening
+on to know when to reload your selected tabs in the browser.
 
 The first part of the setup is the same as before:
 > Install the [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
@@ -294,10 +307,10 @@ I then simply configure `bufwritepost.vimhook.sh` to run this script over SSH:
 
 ### Log editing events for future analytics
 
-My only non-webdev example. I don't know, maybe you're into collecting data.
-This will log out timestamps each time you enter and exit a new buffer in
-Vim. Your working tree is below. Note that `.bufleave.vimhook.sh` is sym-linked
-to `.bufenter.vimhook.sh` so the same script is used to handle two events.
+My only non-webdev example. This will log out timestamps each time you enter
+and exit a new buffer in Vim. Your working tree is below. Note that
+`.bufleave.vimhook.sh` is sym-linked to `.bufenter.vimhook.sh` so the same
+script is used to handle two events.
 
 ```
 .
