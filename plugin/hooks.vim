@@ -229,7 +229,7 @@ aug HookGroup
     au BufUnload * call s:executeHookFiles('BufUnload')
     au BufWinLeave * call s:executeHookFiles('BufWinLeave')
     au BufWritePost * call s:executeHookFiles('BufWritePost')
-    " au CursorHold * call s:executeHookFiles('CursorHold')
+    au CursorHold * call s:executeHookFiles('CursorHold')
     " au CursorMoved * call s:executeHookFiles('CursorMoved')
 aug END
 
