@@ -16,8 +16,44 @@ In the next sections I'll describe how to install the **vim-hooks** plugin,
 give a bit of background on `autocommands` and events in Vim, and then explain
 in detail how to use **vim-hooks**.
 
+**Contents**
+- [Installation](#user-content-installation)
+- [Background: What is an autocommand?](#user-content-background-what-is-an-autocommand)
+- [How to name VimHook scripts](#user-content-how-to-name-vimhook-scripts)
+- [Global VimHooks](#user-content-global-vimhooks)
+- [Extension-specific VimHooks](#user-content-extension-specific-vimhooks)
+- [File-specific VimHooks](#user-content-file-specific-vimhooks)
+- [What autocmd events are exposed in by Vim Hooks?](#user-content-what-autocmd-events-are-exposed-in-by-vim-hooks)
+- [Permissions](#user-content-permissions)
+- [Example usage](#user-content-example-usage)
+    - [Recompile Sass files on save](#user-content-recompile-sass-files-on-save)
+    - [Reload Chrome tabs after recompiling Sass files](#user-content-reload-chrome-tabs-after-recompiling-sass-files)
+    - [Reload Chrome tabs after recompiling Sass files on a remote machine](#user-content-reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
+    - [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#user-content-reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
+    - [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#user-content-reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
+    - [Log editing events for future analytics](#user-content-log-editing-events-for-future-analytics)
+- [Upcoming features](#user-content-upcoming-features)
+
+
+**Contents 2**
+- [Installation](#installation)
+- [Background: What is an autocmd?](#background-what-is-an-autocommand)
+- [How to name VimHook scripts](#how-to-name-vimhook-scripts)
+    - [Global VimHooks](#global-vimhooks)
+    - [Extension-specific VimHooks](#extension-specific-vimhooks)
+    - [File-specific VimHooks](#file-specific-vimhooks)
+- [Which autocmds are supported?](#what-autocmd-events-are-exposed-by-vim-hooks)
+- [Permissions](#permissions)
+- [Example usage](#example-usage)
+    - [Recompile Sass files on save](#recompile-sass-files-on-save)
+    - [Reload Chrome tabs after recompiling Sass files](#reload-chrome-tabs-after-recompiling-sass-files)
+    - [Reload Chrome tabs after recompiling Sass files on remote machine](#reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
+    - [Reload Chrome and Safari tabs on save](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
+    - [Reload Chrome, Safari, and Firefox tabs on save](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
+    - [Create your own edit logs](#log-editing-events-for-future-analytics)
+
 Installation
-------------
+============
 If you don't have a preferred installation method, I recommend
 installing [pathogen.vim](https://github.com/tpope/vim-pathogen), and
 then simply copy and paste:
@@ -26,19 +62,19 @@ then simply copy and paste:
     git clone https://github.com/ahw/vim-hooks.git
 
 Background: What is an autocommand?
------------------------------------
+===================================
 > You can specify commands to be executed automatically when reading or
 > writing a file, when entering or leaving a buffer or window, and when
 > exiting Vim.  For example, you can create an autocommand to set the
 > 'cindent' option for files matching \*.c.  You can also use autocommands
 > to implement advanced features, such as editing compressed files (see
-> |gzip-example|).  The usual place to put autocommands is in your .vimrc or
+> gzip-example).  The usual place to put autocommands is in your .vimrc or
 > .exrc file.
 >
 > Source: `:help autocommands`
 
 How to name VimHook scripts
----------------------------
+===========================
 The **vim-hooks** plugin relies on specific filename patterns in order to
 figure out which scripts to execute after a given `autocmd` event. I'll try to
 refer to these scripts consistently as "VimHook" scripts throughout. There are
@@ -61,7 +97,7 @@ three flavors of VimHook scripts:
 Each script is passed the name of the current buffer and the triggered event
 name as command-line arguments. So in a Bash shell script you could, for
 example, use `$1` and `$2` to access these values (see [example
-usage](/#example-usage)). Currently this plugin only supports synchronous
+usage](#example-usage)). Currently this plugin only supports synchronous
 execution of the `*.vimhook` scripts, but I hope to implement asynchronous
 execution later.
    
@@ -107,16 +143,18 @@ only be executed when the `BufWritePost` event is fired from the `README.md`
 buffer; the VimHook named `app.js.bufenter.vimhook.py`  will only be executed
 when the `BufEnter` evente is fired from the `app.js` buffer.
 
-What autocmd events are exposed in by Vim Hooks?
-------------------------------------------------
+What autocmd events are exposed by Vim Hooks?
+================================================
 Currently, **vim-hooks** responds to
 - `VimEnter`
 - `VimLeave`
 - `BufEnter`
 - `BufLeave`
-- `CursorHold`
+- `BufDelete`
+- `BufUnload`
+- `BufWinLeave`
 - `BufWritePost`
-- `CursorMoved`
+- `CursorHold`
 
 Adding others is not difficult, but I thought there could be a negative
 performance impact if **vim-hooks** was setting up listeners for _every_ Vim
@@ -133,7 +171,7 @@ above (you'll find them easily by grepping the code). You can also raise an issu
 or pull request.
 
 Permissions
-------------
+============
 Ensure that your VimHook scripts have the "execute" flag set.
 
 ```
@@ -141,7 +179,7 @@ $ chmod 755 FILENAME
 ```
 
 Example usage
--------------
+=============
 As mentioned previously, this plugin was motivated by the pain of the
 save-switch-reload cycle between editor and browser that eats up so much time
 in web development. The examples that follow show off how quickly you can
@@ -156,7 +194,8 @@ you can write the automation logic to do these things into a script,
 VimHooks will provide the mechanism for hooking that automation into any of
 the many Vim `autocmd` events.
 
-### Recompile Sass files on save
+Recompile Sass files on save
+----------------------------
 This shows an example working tree and the contents of a two-line shell script,
 `.234.bufwritepost.vimhook.sh` which calls the `sass` compiler.  Remember that
 the ".234" part of the VimHook script can be number you want, or left off
@@ -177,7 +216,8 @@ entirely.
 > sass style.scss style.css
 > ```
 
-### Reload Chrome tabs after recompiling Sass files
+Reload Chrome tabs after recompiling Sass files
+-----------------------------------------------
 Install the [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
 Chrome extension. It requires some manual fiddling to get it up and running,
 but once you do, any `GET /reload HTTP/1.1` requests to `localhost:7700` will
@@ -208,7 +248,8 @@ An example working tree:
 > curl "localhost:7700/reload"
 > ```
 
-### Reload Chrome tabs after recompiling Sass files on a remote machine
+Reload Chrome tabs after recompiling Sass files on a remote machine
+-------------------------------------------------------------------
 This leverages a powerful feature of SSH called **port forwarding**, which
 allows you to forward data from your remote machine back to your client
 machine, through an SSH tunnel. Here we will set things up such that
@@ -242,7 +283,8 @@ your **client** machine listening on port 7700 to reload Chrome tabs.
 > curl "localhost:7700/reload"
 > ```
 
-### Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine
+Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine
+------------------------------------------------------------------------------------------------------
 This makes use of the above port-forwarding along with a piece of slightly
 hacky Applescript to reload the active tab in Safari.
 
@@ -267,8 +309,8 @@ hacky Applescript to reload the active tab in Safari.
 > ```
 > Source: [thelowlypeon, refresh_safari.applescript](https://github.com/thelowlypeon/refresh-safari/blob/master/refresh_safari.applescript)
 
-### Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine
-
+Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine
+---------------------------------------------------------------------------------------------------------------------------------
 One file save, three browser reloads. Great stuff. It's a little hacky in that
 assumes you only want to refresh a single tab in each browser and that this tab
 is your current active tab in each browser. In this example I am using the
@@ -305,8 +347,8 @@ I then simply configure `bufwritepost.vimhook.sh` to run this script over SSH:
 > ssh mac-laptop 'osascript ~/refresh_all_browsers.applescript'
 > ```
 
-### Log editing events for future analytics
-
+Log editing events for future analytics
+---------------------------------------
 My only non-webdev example. This will log out timestamps each time you enter
 and exit a new buffer in Vim. Your working tree is below. Note that
 `.bufleave.vimhook.sh` is sym-linked to `.bufenter.vimhook.sh` so the same
@@ -357,7 +399,7 @@ bufenter for file _colors.scss on Sun Jun 15 19:10:05 PDT 2014
 ```
 
 Upcoming features
------------------
+=================
 - Support wildcard event names so that we don't have to symlink the vim-hook
   scripts.
 - Come up with a way to write files without triggering the VimHook scripts.
