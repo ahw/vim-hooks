@@ -17,40 +17,21 @@ give a bit of background on `autocommands` and events in Vim, and then explain
 in detail how to use **vim-hooks**.
 
 **Contents**
-- [Installation](#user-content-installation)
-- [Background: What is an autocommand?](#user-content-background-what-is-an-autocommand)
-- [How to name VimHook scripts](#user-content-how-to-name-vimhook-scripts)
-- [Global VimHooks](#user-content-global-vimhooks)
-- [Extension-specific VimHooks](#user-content-extension-specific-vimhooks)
-- [File-specific VimHooks](#user-content-file-specific-vimhooks)
-- [What autocmd events are exposed in by Vim Hooks?](#user-content-what-autocmd-events-are-exposed-in-by-vim-hooks)
-- [Permissions](#user-content-permissions)
-- [Example usage](#user-content-example-usage)
-    - [Recompile Sass files on save](#user-content-recompile-sass-files-on-save)
-    - [Reload Chrome tabs after recompiling Sass files](#user-content-reload-chrome-tabs-after-recompiling-sass-files)
-    - [Reload Chrome tabs after recompiling Sass files on a remote machine](#user-content-reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
-    - [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#user-content-reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-    - [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#user-content-reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-    - [Log editing events for future analytics](#user-content-log-editing-events-for-future-analytics)
-- [Upcoming features](#user-content-upcoming-features)
-
-
-**Contents 2**
 - [Installation](#installation)
 - [Background: What is an autocmd?](#background-what-is-an-autocommand)
 - [How to name VimHook scripts](#how-to-name-vimhook-scripts)
     - [Global VimHooks](#global-vimhooks)
     - [Extension-specific VimHooks](#extension-specific-vimhooks)
     - [File-specific VimHooks](#file-specific-vimhooks)
-- [Which autocmds are supported?](#what-autocmd-events-are-exposed-by-vim-hooks)
+- [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
 - [Permissions](#permissions)
 - [Example usage](#example-usage)
     - [Recompile Sass files on save](#recompile-sass-files-on-save)
     - [Reload Chrome tabs after recompiling Sass files](#reload-chrome-tabs-after-recompiling-sass-files)
     - [Reload Chrome tabs after recompiling Sass files on remote machine](#reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
-    - [Reload Chrome and Safari tabs on save](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-    - [Reload Chrome, Safari, and Firefox tabs on save](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-    - [Create your own edit logs](#log-editing-events-for-future-analytics)
+    - [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
+    - [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
+    - [Log editing events for future analytics](#log-editing-events-for-future-analytics)
 
 Installation
 ============
@@ -143,8 +124,8 @@ only be executed when the `BufWritePost` event is fired from the `README.md`
 buffer; the VimHook named `app.js.bufenter.vimhook.py`  will only be executed
 when the `BufEnter` evente is fired from the `app.js` buffer.
 
-What autocmd events are exposed by Vim Hooks?
-================================================
+Which autocmd events are exposed by Vim Hooks?
+==============================================
 Currently, **vim-hooks** responds to
 - `VimEnter`
 - `VimLeave`
@@ -172,10 +153,10 @@ or pull request.
 
 Permissions
 ============
-Ensure that your VimHook scripts have the "execute" flag set.
+Ensure that your VimHook scripts have the "execute" flag set. For example,
 
 ```
-$ chmod 755 FILENAME
+$ chmod 755 .bufwritepost.vimhook.sh
 ```
 
 Example usage
