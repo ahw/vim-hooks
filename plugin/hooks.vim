@@ -1,7 +1,17 @@
+" Maps for each of the hook types
 let s:globalHookFiles = {}
 let s:extensionSpecificHookFiles = {}
 let s:fileSpecificHookFiles = {}
+
+" Flag to toggle hook execution globally
 let s:shouldEnableHooks = 1
+
+" Ignore swap files, the . and .. entries, and the ~/.vimhooks/ directory
+let s:ignoreableFilesRegexList = ['\vswp$', '\v^/\.\.?$', '\v\.vimhooks']
+
+" Keep a set of ignoreable hook files
+let s:ignoreableHookFiles = {}
+
 
 function! s:stopExecutingHooks()
     let s:shouldEnableHooks = 0
@@ -21,9 +31,6 @@ function! s:shouldExecuteHooks()
     endif
 endfunction
 
-" Ignore swap files, the . and .. entries, and the ~/.vimhooks/ directory
-let s:ignoreableFilesRegexList = ['\vswp$', '\v^/\.\.?$', '\v\.vimhooks']
-
 function! s:isIgnoreable(baseName)
     " This function expects the baseName argument to be the base name of a file.
     " It will not work correctly if we pass in an absolute path to a file.
@@ -33,6 +40,22 @@ function! s:isIgnoreable(baseName)
         endif
     endfor
     return 0
+endfunction
+
+function! s:addIgnoreableHookFile(hookfile)
+    let s:ignoreableHookFiles[a:hookfile] = 1
+endfunction
+
+function! s:isIgnoreableHookFile(hookfile)
+    if has_key(s:ignoreableHookFiles, a:hookfile)
+        return 1
+    else
+        return 0
+    endif
+endfunction
+
+function! s:isAnExecutableFile(filename)
+    return getfperm(a:filename) =~ '\v^..x'
 endfunction
 
 function! s:clearHookFiles()
@@ -159,7 +182,7 @@ endfunction
 function! s:executeHookFilesByEvent(dict, eventname)
     if has_key(a:dict, a:eventname)
         for hookfile in a:dict[a:eventname]
-            if getfperm(hookfile) =~ '\v^..x'
+            if s:isAnExecutableFile(hookfile) && !s:isIgnoreableHookFile(hookfile)
                 echom "[vim-hooks] Executing hookfile " . hookfile . " after event " . a:eventname
                 if hookfile !~ '\v^/'
                     " If the hookfile is in the current working directory
@@ -171,11 +194,22 @@ function! s:executeHookFilesByEvent(dict, eventname)
 
                 execute 'silent !' . hookfile . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:eventname)
                 redraw!
-            else
+            elseif !s:isIgnoreableHookFile(hookfile)
+                " Assert: hookfile is not executable, but also not
+                " ignoreable. Prompt user to set executable bit or to start
+                " ignoring.
                 echohl WarningMsg
-                echom "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
-                echo  "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions"
+                echo "[vim-hooks] Could not execute script " . hookfile . " because it does not have \"execute\" permissions.\nSet executable bit (chmod u+x) [yn]? "
+                let key = nr2char(getchar())
+                if key ==# 'y'
+                    echom "Running chmod u+x " . hookfile
+                    execute "!chmod u+x " . hookfile
+                elseif key ==# 'n'
+                    call s:addIgnoreableHookFile(hookfile)
+                endif
                 echohl None
+            else
+                " Assert: we must be ignoring this file. Do nothing.
             endif
         endfor
     endif
