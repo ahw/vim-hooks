@@ -84,6 +84,8 @@ execution later.
    
 Global VimHooks
 ---------------
+**`[.sortkey].eventname.vimhook[.*]`**
+
 _A note on notation: I'm using the UNIX-style convention of enclosing
 optional parts of a pattern in square brackets and representing "blobs" with
 `*`. The `.` should be taken literally._
@@ -104,7 +106,9 @@ which need to run in a specific order (for example,
 `000.bufwritepost.vimhook.sh`, `100.bufwritepost.vimhook.sh`).
 
 Extension-specific VimHooks
---------------------------
+---------------------------
+**`[.sortkey].eventname.ext.vimhook[.*]`**
+
 The format of extension-specific VimHook filenames is
 `[.sortkey].eventname.ext.vimhook[.*]`, where `sortkey` is optional and can be
 whatever integer you want, `eventname` is any valid Vim `autocmd` event
@@ -113,7 +117,9 @@ react to. For example, `.bufwritepost.scss.vimhook` will only be executed
 when the `BufWritePost` event is fired on `*.scss` files.
 
 File-specific VimHooks
---------------------------
+----------------------
+**`filename.eventname.vimhook[.*]`**
+
 The format of file-specific VimHook filenames is
 `filename.eventname.vimhook[.*]`, where `filename` is the full name you want to
 react to and `eventname` is any valid Vim `autocmd` event
