@@ -11,6 +11,10 @@ function! s:VimHook.New(path, event, scope, ...)
         " executable
         let newVimHook.path = "./" . a:path
     endif
+    " Create a unique id for this VimHook. For now we'll assume the path to
+    " the hook file is unique, even if we chop off the ".disabled" part,
+    " which may or may not exist.
+    let newVimHook.id = substitute(newVimHook.path, '\v.disabled$', "", "")
 
     let newVimHook.isEnabled = 1
     if newVimHook.path =~ '\v\.disabled$'

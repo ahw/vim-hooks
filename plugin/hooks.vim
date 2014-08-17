@@ -84,7 +84,7 @@ function! s:addHookFile(vimHook)
             let dict[a:vimHook.scopeKey][a:vimHook.event] = {}
         endif
 
-        let dict[a:vimHook.scopeKey][a:vimHook.event][a:vimHook.path] = a:vimHook
+        let dict[a:vimHook.scopeKey][a:vimHook.event][a:vimHook.id] = a:vimHook
     elseif a:vimHook.scope == "global"
         let dict = s:globalHookFiles
         if !has_key(dict, a:vimHook.event)
@@ -92,7 +92,7 @@ function! s:addHookFile(vimHook)
             let dict[a:vimHook.event] = {}
         endif
 
-        let dict[a:vimHook.event][a:vimHook.path] = a:vimHook
+        let dict[a:vimHook.event][a:vimHook.id] = a:vimHook
     endif
 endfunction
 
@@ -187,8 +187,8 @@ endfunction
 
 function! s:executeHookFilesByEvent(dict, eventname)
     if has_key(a:dict, a:eventname)
-        for vimHookPath in sort(keys((a:dict[a:eventname])))
-            let vimHook = a:dict[a:eventname][vimHookPath]
+        for vimHookId in sort(keys((a:dict[a:eventname])))
+            let vimHook = a:dict[a:eventname][vimHookId]
             if s:isAnExecutableFile(vimHook.path) && !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
                 echom "[vim-hooks] Executing hookfile " . vimHook.path . " after event " . vimHook.event
                 execute 'silent !' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
@@ -202,7 +202,7 @@ function! s:executeHookFilesByEvent(dict, eventname)
                 let key = nr2char(getchar())
                 if key ==# 'y'
                     echom "Running chmod u+x " . vimHook.path
-                    execute "!chmod u+x " . hookfile
+                    execute "!chmod u+x " . vimHook.path
                 elseif key ==# 'n'
                     call s:addIgnoreableHookFile(vimHook.path)
                 endif
@@ -287,38 +287,23 @@ function! s:handleKeypressInVimHooksListing(key)
             let filenameRegex = '\v^\[.\]\s(.+),\s(\a+):\s(.+)'
             if line =~ globalRegEx
                 let event = get(matchlist(line, globalRegEx), 1, "")
-                let hookfile = get(matchlist(line, globalRegEx), 2, "")
-                " echo "event: " . event . ", hookfile: " . hookfile
-                let vimHook = s:globalHookFiles[event][hookfile]
-                let oldPath = vimHook.path
-                call vimHook.toggleIsEnabled()
-                let newPath = vimHook.path
-                let s:globalHookFiles[event][newPath] = vimHook
-                unlet s:globalHookFiles[event][oldPath]
+                let vimHookId = substitute(get(matchlist(line, globalRegEx), 2, ""), '\v\.disabled$', "", "")
+                echom "event: " . event . ", vimHookId: " . vimHookId
+                call s:globalHookFiles[event][vimHookId].toggleIsEnabled()
 
             elseif line =~ extensionRegEx
                 let ext = get(matchlist(line, extensionRegEx), 1, "")
                 let event = get(matchlist(line, extensionRegEx), 2, "")
-                let hookfile = get(matchlist(line, extensionRegEx), 3, "")
-                " echo "ext: " . ext . ", event: " . event . ", hookfile: " . hookfile
-                let vimHook = s:extensionSpecificHookFiles[ext][event][hookfile]
-                let oldPath = vimHook.path
-                call vimHook.toggleIsEnabled()
-                let newPath = vimHook.path
-                let s:extensionSpecificHookFiles[ext][event][newPath] = vimHook
-                unlet s:extensionSpecificHookFiles[ext][event][oldPath]
+                let vimHookId = substitute(get(matchlist(line, extensionRegEx), 3, ""), '\v\.disabled$', "", "")
+                echom "ext: " . ext . ", event: " . event . ", vimHookId: " . vimHookId
+                call s:extensionSpecificHookFiles[ext][event][vimHookId].toggleIsEnabled()
 
             elseif line =~ filenameRegex
                 let filename = get(matchlist(line, filenameRegex), 1, "")
                 let event = get(matchlist(line, filenameRegex), 2, "")
-                let hookfile = get(matchlist(line, filenameRegex), 3, "")
-                " echo "filename: " . filename . ", event: " . event . ", hookfile: " . hookfile
-                let vimHook = s:fileSpecificHookFiles[filename][event][hookfile]
-                let oldPath = vimHook.path
-                call vimHook.toggleIsEnabled()
-                let newPath = vimHook.path
-                let s:fileSpecificHookFiles[filename][event][newPath] = vimHook
-                unlet s:fileSpecificHookFiles[filename][event][oldPath]
+                let vimHookId = substitute(get(matchlist(line, filenameRegex), 3, ""), '\v\.disabled$', "", "")
+                echom "filename: " . filename . ", event: " . event . ", vimHookId: " . vimHookId
+                call s:fileSpecificHookFiles[filename][event][vimHookId].toggleIsEnabled()
             endif
 
             let checked = get(matchlist(line, '\v\[(.)\]'), 1, "") == " " ? 0 : 1
