@@ -3,7 +3,7 @@
 let s:VimHook = {}
 let g:VimHook = s:VimHook
 
-function! s:VimHook.New(path, event, scope, ...)
+function! s:VimHook.New(path, event, pattern)
     let newVimHook = copy(self)
     let newVimHook.path = a:path
     if a:path !~ '\v^/'
@@ -22,12 +22,7 @@ function! s:VimHook.New(path, event, scope, ...)
     endif
 
     let newVimHook.event = a:event
-    let newVimHook.scope = a:scope
-    if newVimHook.scope !=? 'global'
-        " If this isn't a "global" scope VimHook then set the scopeKey
-        " attribute to the final (optional) argument
-        let newVimHook.scopeKey = a:1
-    endif
+    let newVimHook.pattern = a:pattern
 
     return newVimHook
 endfunction

@@ -1,9 +1,7 @@
 runtime lib/vim-hook.vim
+runtime lib/vim-hook-listing.vim
 
-" Maps for each of the hook types
-let s:globalHookFiles = {}
-let s:extensionSpecificHookFiles = {}
-let s:fileSpecificHookFiles = {}
+let s:patternBasedVimHooks = {}
 
 " Flag to toggle hook execution globally
 let s:shouldEnableHooks = 1
@@ -66,34 +64,15 @@ function! s:clearHookFiles()
 endfunction
 
 function! s:addHookFile(vimHook)
-    if a:vimHook.scope == "extension" || a:vimHook.scope == "filename"
-        let dict = {}
-        if a:vimHook.scope == "extension"
-            let dict = s:extensionSpecificHookFiles
-        elseif a:vimHook.scope == "filename"
-            let dict = s:fileSpecificHookFiles
-        endif
-
-        if !has_key(dict, a:vimHook.scopeKey)
-            " Add to the dictionary of file-specific or extension-specific hooks
-            let dict[a:vimHook.scopeKey] = {}
-        endif
-
-        if !has_key(dict[a:vimHook.scopeKey], a:vimHook.event)
-            " Add to the dictionary of file-specific or extension-specific hooks
-            let dict[a:vimHook.scopeKey][a:vimHook.event] = {}
-        endif
-
-        let dict[a:vimHook.scopeKey][a:vimHook.event][a:vimHook.id] = a:vimHook
-    elseif a:vimHook.scope == "global"
-        let dict = s:globalHookFiles
-        if !has_key(dict, a:vimHook.event)
-            " Add to the dictionary of global hooks
-            let dict[a:vimHook.event] = {}
-        endif
-
-        let dict[a:vimHook.event][a:vimHook.id] = a:vimHook
+    if !has_key(s:patternBasedVimHooks, a:vimHook.event)
+        let s:patternBasedVimHooks[a:vimHook.event] = {}
     endif
+
+    if !has_key(s:patternBasedVimHooks[a:vimHook.event], a:vimHook.pattern)
+        let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern] = {}
+    endif
+
+    let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern][a:vimHook.id] = a:vimHook
 endfunction
 
 function! s:findHookFiles()
@@ -124,11 +103,11 @@ function! s:findHookFiles()
                 let ext = get(hiddenFileMatches, 3, "")
 
                 if len(ext)
-                    call s:addHookFile(g:VimHook.New(hookfile, eventname, 'extension', ext))
+                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*\.' . ext))
                 else
                     " If the empty string is passed, this will become a
                     " global hook, which is what we want.
-                    call s:addHookFile(g:VimHook.New(hookfile, eventname, 'global'))
+                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*'))
                 endif
             else
                 " Normal (i.e., not hidden) file case. Intended for when
@@ -147,7 +126,7 @@ function! s:findHookFiles()
                 let filename = get(singleFileMatches, 1, "")
                 let eventname = get(singleFileMatches, 2, "")
 
-                call s:addHookFile(g:VimHook.New(hookfile, eventname, 'filename', filename))
+                call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v^' . filename . '$'))
             endif
         endif
     endfor
@@ -173,54 +152,43 @@ function! s:executeHookFiles(...)
         let filename = get(matchlist(getreg('%'), '\v([^/]+)$'), 1, "")
         let ext =  get(matchlist(filename, '\v\.(\a+)$'), 1, "")
 
-        if has_key(s:fileSpecificHookFiles, filename)
-            call s:executeHookFilesByEvent(s:fileSpecificHookFiles[filename], eventname)
+        if has_key(s:patternBasedVimHooks, eventname)
+            for pattern in keys(s:patternBasedVimHooks[eventname])
+                if filename =~ pattern
+                    for vimHookId in keys(s:patternBasedVimHooks[eventname][pattern])
+                        let vimHook = s:patternBasedVimHooks[eventname][pattern][vimHookId]
+                        if s:isAnExecutableFile(vimHook.path) && !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
+                            echom "[vim-hooks] Executing hookfile " . vimHook.path . " after event " . vimHook.event
+                            execute 'silent !' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
+                            redraw!
+                        elseif !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
+                            " Assert: hookfile is not executable, but also not
+                            " ignoreable. Prompt user to set executable bit or to start
+                            " ignoring.
+                            echohl WarningMsg
+                            echo "[vim-hooks] Could not execute script " . vimHook.path . " because it does not have \"execute\" permissions.\nSet executable bit (chmod u+x) [yn]? "
+                            let key = nr2char(getchar())
+                            if key ==# 'y'
+                                echom "Running chmod u+x " . vimHook.path
+                                execute "!chmod u+x " . vimHook.path
+                            elseif key ==# 'n'
+                                call s:addIgnoreableHookFile(vimHook.path)
+                            endif
+                            echohl None
+                        else
+                            " Assert: we must be ignoring this file or it is permanently
+                            " disabled. Do nothing.
+                        endif
+                    endfor
+                endif
+            endfor
         endif
-
-        if has_key(s:extensionSpecificHookFiles, ext)
-            call s:executeHookFilesByEvent(s:extensionSpecificHookFiles[ext], eventname)
-        endif
-
-        call s:executeHookFilesByEvent(s:globalHookFiles, eventname)
     endfor
 endfunction
 
-function! s:executeHookFilesByEvent(dict, eventname)
-    if has_key(a:dict, a:eventname)
-        for vimHookId in sort(keys((a:dict[a:eventname])))
-            let vimHook = a:dict[a:eventname][vimHookId]
-            if s:isAnExecutableFile(vimHook.path) && !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
-                echom "[vim-hooks] Executing hookfile " . vimHook.path . " after event " . vimHook.event
-                execute 'silent !' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
-                redraw!
-            elseif !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
-                " Assert: hookfile is not executable, but also not
-                " ignoreable. Prompt user to set executable bit or to start
-                " ignoring.
-                echohl WarningMsg
-                echo "[vim-hooks] Could not execute script " . vimHook.path . " because it does not have \"execute\" permissions.\nSet executable bit (chmod u+x) [yn]? "
-                let key = nr2char(getchar())
-                if key ==# 'y'
-                    echom "Running chmod u+x " . vimHook.path
-                    execute "!chmod u+x " . vimHook.path
-                elseif key ==# 'n'
-                    call s:addIgnoreableHookFile(vimHook.path)
-                endif
-                echohl None
-            else
-                " Assert: we must be ignoring this file or it is permanently
-                " disabled. Do nothing.
-            endif
-        endfor
-    endif
-endfunction
 
 function! s:listVimHooks()
     call s:openVimHookListingBuffer()
-endfunction
-
-function! s:joinWithNewline(lines, anotherLine)
-    return a:lines . "\n" . a:anotherLine
 endfunction
 
 function! s:createMarkdownHeaderText(header, level)
@@ -248,130 +216,13 @@ function! s:openVimHookListingBuffer(...)
     execute "set nowrap"
     setfiletype hooks
 
-    let @t = s:getVimHookListingText()
+    let @t = g:VimHookListing.getVimHookListingText(s:patternBasedVimHooks)
     silent put t
     execute "0"
     execute "delete"
-    execute "10"
+    execute g:VimHookListing.lowestLine
 
-    let done = 0
-    while !done
-        redraw!
-        let key = nr2char(getchar())
-        let done = s:handleKeypressInVimHooksListing(key)
-    endwhile
-    execute "q!"
-    
-endfunction
-
-function! s:handleKeypressInVimHooksListing(key)
-    let lnum = line('.')
-    if a:key == 'j'
-        call cursor(lnum + 1, 1) " Put cursor on next line
-    elseif a:key == 'k'
-        call cursor(lnum - 1, 1) "Put cursor on next line
-    elseif a:key == nr2char(27) "escape
-        return 1
-    " elseif a:key == "\r" || a:key == "\n" "enter and ctrl-j
-    elseif a:key == 'x'
-        let line = getline(lnum)
-        if line =~ '\v^\[.\]'
-            " If this is a line beginning with checkbox, then toggle it
-
-            " Do some really gross stuff to figure out which VimHook this is
-            " by doing RegEx matching on the actual line of text here.
-            " Highly dependent on how we choose to format the ListVimHooks
-            " text. Maybe come up with a better solution later.
-            let globalRegEx = '\v^\[.\]\s(\a+)\:\s(.+)'
-            let extensionRegEx = '\v^\[.\]\s\*\.(.+),\s(\a+):\s(.+)'
-            let filenameRegex = '\v^\[.\]\s(.+),\s(\a+):\s(.+)'
-            if line =~ globalRegEx
-                let event = get(matchlist(line, globalRegEx), 1, "")
-                let vimHookId = substitute(get(matchlist(line, globalRegEx), 2, ""), '\v\.disabled$', "", "")
-                echom "event: " . event . ", vimHookId: " . vimHookId
-                call s:globalHookFiles[event][vimHookId].toggleIsEnabled()
-
-            elseif line =~ extensionRegEx
-                let ext = get(matchlist(line, extensionRegEx), 1, "")
-                let event = get(matchlist(line, extensionRegEx), 2, "")
-                let vimHookId = substitute(get(matchlist(line, extensionRegEx), 3, ""), '\v\.disabled$', "", "")
-                echom "ext: " . ext . ", event: " . event . ", vimHookId: " . vimHookId
-                call s:extensionSpecificHookFiles[ext][event][vimHookId].toggleIsEnabled()
-
-            elseif line =~ filenameRegex
-                let filename = get(matchlist(line, filenameRegex), 1, "")
-                let event = get(matchlist(line, filenameRegex), 2, "")
-                let vimHookId = substitute(get(matchlist(line, filenameRegex), 3, ""), '\v\.disabled$', "", "")
-                echom "filename: " . filename . ", event: " . event . ", vimHookId: " . vimHookId
-                call s:fileSpecificHookFiles[filename][event][vimHookId].toggleIsEnabled()
-            endif
-
-            let checked = get(matchlist(line, '\v\[(.)\]'), 1, "") == " " ? 0 : 1
-            let toggledLine = ""
-            if checked
-                let toggledLine = substitute(line, '\v^\[.\]', '[ ]', "") . ".disabled"
-            else
-                let toggledLine = substitute(line, '\v^\[.\]', '[x]', "")
-                let toggledLine = substitute(toggledLine, '\v\.disabled$', '', "")
-            endif
-            call setline(lnum, toggledLine)
-        endif
-    endif
-
-    return 0
-endfunction
-
-function! s:getVimHookListingText()
-    let checkedbox = '[x]'
-    let uncheckedbox = '[ ]'
-    let eventNameColWidth = 15
-    let extensionColWidth = 9
-    let filenameColWidth = 24
-    let globalVimHooksTitle = 'Global VimHooks'
-    let extensionVimHooksTitle = 'Extension-specific VimHooks'
-    let filenameVimHooksTitle = 'Filename-specific VimHooks'
-
-    let text = "Press...\n"
-    let text = s:joinWithNewline(text, '      "j" to move down')
-    let text = s:joinWithNewline(text, '      "k" to move up')
-    let text = s:joinWithNewline(text, '      "x" to enable/disable a VimHook')
-    let text = s:joinWithNewline(text, '      "<ESC>" to save selections and exit')
-    let text = s:joinWithNewline(text, "")
-
-    if len(keys(s:globalHookFiles)) > 0
-        let text = s:joinWithNewline(text, s:createMarkdownHeaderText(globalVimHooksTitle, 1))
-        for eventName in keys(s:globalHookFiles)
-            for vimHook in values(s:globalHookFiles[eventName])
-                let text = s:joinWithNewline(text, (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . vimHook.event . ': ' . vimHook.path)
-            endfor
-        endfor
-    endif
-
-    if len(keys(s:extensionSpecificHookFiles)) > 0
-        let text = s:joinWithNewline(text, '')
-        let text = s:joinWithNewline(text, s:createMarkdownHeaderText(extensionVimHooksTitle, 1))
-        for ext in keys(s:extensionSpecificHookFiles)
-            for eventName in keys(s:extensionSpecificHookFiles[ext])
-                for vimHook in values(s:extensionSpecificHookFiles[ext][eventName])
-                    let text = s:joinWithNewline(text, (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' *.' . vimHook.scopeKey . ', ' . vimHook.event . ': ' . vimHook.path)
-                endfor
-            endfor
-        endfor
-    endif
-
-    if len(keys(s:fileSpecificHookFiles)) > 0
-        let text = s:joinWithNewline(text, '')
-        let text = s:joinWithNewline(text, s:createMarkdownHeaderText(filenameVimHooksTitle, 1))
-        for name in keys(s:fileSpecificHookFiles)
-            for eventName in keys(s:fileSpecificHookFiles[name])
-                for vimHook in values(s:fileSpecificHookFiles[name][eventName])
-                    let text = s:joinWithNewline(text, (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . vimHook.scopeKey . ', ' . vimHook.event . ': ' . vimHook.path)
-                endfor
-            endfor
-        endfor
-    endif
-
-    return text
+    call g:VimHookListing.handleKeys()
 endfunction
 
 "Create an autocmd group
