@@ -14,7 +14,9 @@ shell scripts into Vim events, this is for you.
 
 In the next sections I'll describe how to install the **vim-hooks** plugin,
 give a bit of background on `autocommands` and events in Vim, and then explain
-in detail how to use **vim-hooks**.
+in detail how to use **vim-hooks**.  Here is your obligatory live-demo gif.
+
+![VimHooks GIF](http://g.recordit.co/ciaH7KgkfM.gif)
 
 **Contents**
 - [Installation](#installation)
