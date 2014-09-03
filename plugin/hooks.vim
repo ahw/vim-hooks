@@ -209,11 +209,11 @@ function! s:openVimHookListingBuffer(...)
         let width = a:1
     endif
     execute "new"
-    execute "setlocal buftype=nowrite"
-    execute "setlocal bufhidden=delete"
-    execute "setlocal noswapfile"
-    execute "setlocal nobuflisted"
-    execute "set nowrap"
+    setlocal buftype=nowrite
+    setlocal bufhidden=delete
+    setlocal noswapfile
+    setlocal nobuflisted
+    set nowrap
     setfiletype hooks
 
     let @t = g:VimHookListing.getVimHookListingText(s:patternBasedVimHooks)
@@ -221,12 +221,14 @@ function! s:openVimHookListingBuffer(...)
     execute "0"
     execute "delete"
     execute g:VimHookListing.lowestLine
+    call feedkeys('0')
+    setlocal nomodifiable
 
-    call g:VimHookListing.handleKeys()
+    "call g:VimHookListing.handleKeys()
 endfunction
 
 "Create an autocmd group
-aug HookGroup
+aug VimHookGroup
     "Clear the augroup. Otherwise Vim will combine them.
     au!
     au VimEnter * call s:executeHookFiles('VimEnter')
@@ -241,21 +243,26 @@ aug HookGroup
     " au CursorMoved * call s:executeHookFiles('CursorMoved')
 aug END
 
+aug VimHookListingGroup
+    au!
+    au FileType hooks nnoremap <silent> <buffer> x :call g:VimHookListing.toggleLine()<cr>
+    au FileType hooks nnoremap <silent> <buffer> q :call g:VimHookListing.exitBuffer()<cr>
+    au FileType hooks nnoremap <silent> <buffer> <cr> :call g:VimHookListing.exitBuffer()<cr>
+    au FileType hooks nnoremap <silent> <buffer> <esc> :call g:VimHookListing.exitBuffer()<cr>
+aug END
+
 " Immediately run the s:findHookFiles function.
 call <SID>findHookFiles()
 
 " Find all hook files in the current working directory
 command! -nargs=0 FindHookFiles call <SID>findHookFiles()
-
 " Manually execute hook files corresponding to whichever events are given as
 " the arguments to this function. Will autocomplete event names. Example:
 " :ExecuteHookFiles BufWritePost VimLeave. Currently only executes the
 " global hook files.
 command! -nargs=+ -complete=event ExecuteHookFiles call <SID>executeHookFiles(<f-args>)
-
 " Manually start and stop executing hooks
 command! -nargs=0 StopExecutingHooks call <SID>stopExecutingHooks()
 command! -nargs=0 StartExecutingHooks call <SID>startExecutingHooks()
-
 " Pretty-print a list of all the vimhook dictionaries for debugging
 command! -nargs=0 ListVimHooks call <SID>listVimHooks()

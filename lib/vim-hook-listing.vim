@@ -19,12 +19,15 @@ function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
     let checkedbox = '[x]'
     let uncheckedbox = '[ ]'
 
-    let text = "Press...\n"
-    let text = self.joinWithNewline(text, '      "j" to move down')
-    let text = self.joinWithNewline(text, '      "k" to move up')
-    let text = self.joinWithNewline(text, '      "x" to enable/disable a VimHook')
-    let text = self.joinWithNewline(text, '      "<ESC> or <ENTER>" to save selections and exit')
-    let text = self.joinWithNewline(text, "")
+    let text = 'Mappings'
+    let text = self.joinWithNewline(text, '--------')
+    let text = self.joinWithNewline(text, 'x     : enable/disable a VimHook')
+    let text = self.joinWithNewline(text, 'q     : save selections and exit')
+    let text = self.joinWithNewline(text, '<ESC> : save selections and exit (duplicate mapping)')
+    let text = self.joinWithNewline(text, '<CR>  : save selections and exit (duplicate mapping)')
+    let text = self.joinWithNewline(text, '')
+    let text = self.joinWithNewline(text, 'Hooks')
+    let text = self.joinWithNewline(text, '-----')
 
     let currentLineNumber = len(split(text, "\n")) + 2
     let self.lowestLine = currentLineNumber
@@ -42,7 +45,7 @@ function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
                     let betterPattern = substitute(betterPattern, '\v\$', '', '')
                     let betterPattern = substitute(betterPattern, '\v\.\*', '*', '')
                     let betterPattern = substitute(betterPattern, '\v\\\.', '.', '')
-                    let text = self.joinWithNewline(text, (self.lowestLine == currentLineNumber ? '> ' : '  ') . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(betterPattern, 10) . ' ' . vimHook.event . ': ' . vimHook.path)
+                    let text = self.joinWithNewline(text, '  ' . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(betterPattern, 10) . ' ' . vimHook.event . ': ' . vimHook.path)
                     let self.lineNumbersToVimHooks[currentLineNumber] = vimHook
                     let currentLineNumber += 1
                     let self.highestLine += 1
@@ -57,60 +60,33 @@ function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
     return text
 endfunction
 
-function! s:VimHookListing.handleKeys()
-    let done = 0
-    while !done
-        redraw!
-        let key = nr2char(getchar())
-        let done = self.handleKeyPress(key)
-    endwhile
-    execute "q!"
-endfunction
-
-function! s:VimHookListing.handleKeyPress(key)
+function! s:VimHookListing.toggleLine()
+    setlocal modifiable
     let lnum = line('.')
-    if a:key == 'j'
-        let nnum = min([lnum + 1, self.highestLine])
-        let line = getline(lnum)
-        let nline = getline(nnum)
 
-        call setline(lnum, substitute(line, '\v^.', ' ', ''))
-        call cursor(nnum, 1) " Put cursor on next line
-        call setline(nnum, substitute(nline, '\v^.', '>', ''))
+    let line = getline(lnum)
+    if line =~ '\v\[.\]'
+        " If this is a line beginning with checkbox, then toggle it by
+        " calling the toggleIsEnabled() function on the appropriate
+        " VimHook and then changing the text to match.
 
-    elseif a:key == 'k'
-        let pnum = max([lnum - 1, self.lowestLine])
-        let line = getline(lnum)
-        let pline = getline(pnum)
+        call self.lineNumbersToVimHooks[lnum].toggleIsEnabled()
 
-        call setline(lnum, substitute(line, '\v^.', ' ', ''))
-        call cursor(pnum, 1) "Put cursor on previous line
-        call setline(pnum, substitute(pline, '\v^.', '>', ''))
-
-    elseif a:key == nr2char(27) || a:key == "\r" || a:key == "\n"
-        "enter, ctrl-j, escape
-        return 1
-    elseif a:key == 'x'
-        let line = getline(lnum)
-        echom line
-        if line =~ '\v^.\s\[.\]'
-            " If this is a line beginning with checkbox, then toggle it by
-            " calling the toggleIsEnabled() function on the appropriate
-            " VimHook and then changing the text to match.
-
-            call self.lineNumbersToVimHooks[lnum].toggleIsEnabled()
-
-            let checked = get(matchlist(line, '\v\[(.)\]'), 1, "") == " " ? 0 : 1
-            let toggledLine = ""
-            if checked
-                let toggledLine = substitute(line, '\v\[.\]', '[ ]', "") . ".disabled"
-            else
-                let toggledLine = substitute(line, '\v\[.\]', '[x]', "")
-                let toggledLine = substitute(toggledLine, '\v\.disabled$', '', "")
-            endif
-            call setline(lnum, toggledLine)
+        let checked = get(matchlist(line, '\v\[(.)\]'), 1, "") == " " ? 0 : 1
+        let toggledLine = ""
+        if checked
+            let toggledLine = substitute(line, '\v\[.\]', '[ ]', "") . ".disabled"
+        else
+            let toggledLine = substitute(line, '\v\[.\]', '[x]', "")
+            let toggledLine = substitute(toggledLine, '\v\.disabled$', '', "")
         endif
+        call setline(lnum, toggledLine)
     endif
 
-    return 0
+    redraw!
+    setlocal nomodifiable
+endfunction
+
+function! s:VimHookListing.exitBuffer()
+    execute "q!"
 endfunction
