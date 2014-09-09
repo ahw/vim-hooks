@@ -15,6 +15,9 @@ shell scripts into Vim events, this is for you.
 In the next sections I'll describe how to install the **vim-hooks** plugin,
 give a bit of background on `autocommands` and events in Vim, and then explain
 in detail how to use **vim-hooks**.  Here is your obligatory live-demo gif.
+Notice how I'm activating the
+[chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh) browser
+extension in the upper right-hander corner a few frames in.
 
 ![VimHooks GIF](http://g.recordit.co/ciaH7KgkfM.gif)
 

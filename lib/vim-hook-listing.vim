@@ -15,6 +15,15 @@ function! s:VimHookListing.joinWithNewline(lines, anotherLine)
     return a:lines . "\n" . a:anotherLine
 endfunction
 
+function! s:VimHookListing.isCheckboxLine(num)
+    let line = getline(a:num)
+    if line =~ '\v\[.\]'
+        return 1
+    else
+        return 0
+    endif
+endfunction
+
 function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
     let checkedbox = '[x]'
     let uncheckedbox = '[ ]'
@@ -25,11 +34,13 @@ function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
     let text = self.joinWithNewline(text, 'q     : save selections and exit')
     let text = self.joinWithNewline(text, '<ESC> : save selections and exit (duplicate mapping)')
     let text = self.joinWithNewline(text, '<CR>  : save selections and exit (duplicate mapping)')
+    let text = self.joinWithNewline(text, 'i     : open VimHook script in split')
+    let text = self.joinWithNewline(text, 's     : open VimHook script in vertical split')
     let text = self.joinWithNewline(text, '')
     let text = self.joinWithNewline(text, 'Hooks')
     let text = self.joinWithNewline(text, '-----')
 
-    let currentLineNumber = len(split(text, "\n")) + 2
+    let currentLineNumber = len(split(text, "\n")) + 1
     let self.lowestLine = currentLineNumber
     let self.highestLine = currentLineNumber
 
@@ -65,7 +76,7 @@ function! s:VimHookListing.toggleLine()
     let lnum = line('.')
 
     let line = getline(lnum)
-    if line =~ '\v\[.\]'
+    if self.isCheckboxLine(lnum)
         " If this is a line beginning with checkbox, then toggle it by
         " calling the toggleIsEnabled() function on the appropriate
         " VimHook and then changing the text to match.
@@ -85,6 +96,22 @@ function! s:VimHookListing.toggleLine()
 
     redraw!
     setlocal nomodifiable
+endfunction
+
+function! s:VimHookListing.openLineInSplit(splitCommand)
+    let lnum = line('.')
+    if self.isCheckboxLine(lnum)
+        let hookFilename = self.lineNumbersToVimHooks[lnum].path
+        execute a:splitCommand . " " . hookFilename
+    endif
+endfunction
+
+function! s:VimHookListing.openLineInVerticalSplit()
+    call self.openLineInSplit('vsp')
+endfunction
+
+function! s:VimHookListing.openLineInHorizontalSplit()
+    call self.openLineInSplit('sp')
 endfunction
 
 function! s:VimHookListing.exitBuffer()

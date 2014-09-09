@@ -208,7 +208,7 @@ function! s:openVimHookListingBuffer(...)
         " If number of extra args is 1 and the first extra arg is a Number
         let width = a:1
     endif
-    execute "new"
+    execute 'new VimHooks\ Listing'
     setlocal buftype=nowrite
     setlocal bufhidden=delete
     setlocal noswapfile
@@ -243,12 +243,15 @@ aug VimHookGroup
     " au CursorMoved * call s:executeHookFiles('CursorMoved')
 aug END
 
+" Set up key mappings specifically for the :ListVimHooks buffer
 aug VimHookListingGroup
     au!
     au FileType hooks nnoremap <silent> <buffer> x :call g:VimHookListing.toggleLine()<cr>
     au FileType hooks nnoremap <silent> <buffer> q :call g:VimHookListing.exitBuffer()<cr>
     au FileType hooks nnoremap <silent> <buffer> <cr> :call g:VimHookListing.exitBuffer()<cr>
     au FileType hooks nnoremap <silent> <buffer> <esc> :call g:VimHookListing.exitBuffer()<cr>
+    au FileType hooks nnoremap <silent> <buffer> i :call g:VimHookListing.openLineInHorizontalSplit()<cr>
+    au FileType hooks nnoremap <silent> <buffer> s :call g:VimHookListing.openLineInVerticalSplit()<cr>
 aug END
 
 " Immediately run the s:findHookFiles function.
