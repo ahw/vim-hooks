@@ -124,3 +124,24 @@ COMMANDS                                        *vim-hooks-commands*
                         of VimHook scripts run |:StopExecutingHooks|. Running
                         this command multiple times in a row is the same as
                         just running it once.
+
+EXAMPLES                                        *vim-hooks-examples*
+
+Recompile Sass files on ":w" ~
+
+Working tree:
+    .
+    ├── .bufwritepost.vimhook.sh
+    ├── _colors.scss
+    ├── style.scss
+    └── style.css
+
+Contents of ./.bufwritepost.vimhook.sh:
+
+    #!/bin/sh
+    sass style.scss style.css
+
+Open the style.scss file and issue a |:w| command to write out the file. This
+will trigger a |BufWritePost| event in Vim, which will in turn cause your
+.bufwritepost.vimhook.sh file to execute and recompile the style.scss file
+into style.css.

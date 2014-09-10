@@ -64,7 +64,8 @@ function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
             endfor
         endfor
     else
-        let text = self.joinWithNewline(text, "New hook files found!")
+        let text = self.joinWithNewline(text, "    No hook files found! Press <ENTER> or <ESC> to get out of this and then see")
+        let text = self.joinWithNewline(text, "    :help vim-hook-examples. Or visit https://github.com/ahw/vim-hooks#example-usage")
     endif
     let self.highestLine -= 1 " Since the last increment doesn't count
 
