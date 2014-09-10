@@ -19,7 +19,8 @@ Notice how I'm activating the
 [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh) browser
 extension in the upper right-hander corner a few frames in.
 
-![VimHooks GIF](http://g.recordit.co/ciaH7KgkfM.gif)
+![VimHooks GIF](http://g.recordit.co/ciaH7KgkfM.gif =200x)
+![VimHooks GIF](http://g.recordit.co/CITvKXJOFe.gif = 200x)
 
 **Contents**
 - [Installation](#installation)
