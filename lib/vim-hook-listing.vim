@@ -33,9 +33,10 @@ function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
     let text = self.joinWithNewline(text, 'x     : enable/disable a VimHook')
     let text = self.joinWithNewline(text, 'q     : save selections and exit')
     let text = self.joinWithNewline(text, '<ESC> : save selections and exit (duplicate mapping)')
-    let text = self.joinWithNewline(text, '<CR>  : save selections and exit (duplicate mapping)')
     let text = self.joinWithNewline(text, 'i     : open VimHook script in split')
     let text = self.joinWithNewline(text, 's     : open VimHook script in vertical split')
+    let text = self.joinWithNewline(text, 'o     : open VimHook script in prev window')
+    let text = self.joinWithNewline(text, '<CR>  : open VimHook script in prev window (duplicate mapping)')
     let text = self.joinWithNewline(text, '')
     let text = self.joinWithNewline(text, 'Hooks')
     let text = self.joinWithNewline(text, '-----')
@@ -115,6 +116,49 @@ function! s:VimHookListing.openLineInHorizontalSplit()
     call self.openLineInSplit('sp')
 endfunction
 
+function! s:VimHookListing.openLineInPreviousWindow()
+    call self._tryToOpenInPreviousWindow()
+endfunction
+
 function! s:VimHookListing.exitBuffer()
     execute "q!"
+endfunction
+
+"FUNCTION: VimHookListing._tryToOpenInPreviousWindow()
+"[STOLEN FROM NERDTREE.VIM]
+function! s:VimHookListing._tryToOpenInPreviousWindow()
+    let lnum = line('.')
+    if self.isCheckboxLine(lnum)
+        let hookFilename = self.lineNumbersToVimHooks[lnum].path
+
+        if !hooks#isWindowUsable(winnr("#")) && hooks#firstUsableWindow() ==# -1
+            " If we can't use the previous window and we don't have a usable
+            " window at all, then just open in a vertical split
+            call self.openLineInVerticalSplit() " TODO: Use vertical or horizontal
+        else
+            try
+                if !hooks#isWindowUsable(winnr("#"))
+                    " If we can't use the previous window then use the first
+                    " usable window (which we know is available due to the above
+                    " conditional)
+                    execute hooks#firstUsableWindow() . "wincmd w"
+                    execute "e" . " " . hookFilename
+                else
+                    " Else go to the previous window. TODO: Not sure what will
+                    " happen here.
+                    execute "wincmd p"
+                    execute "e" . " " . hookFilename
+                endif
+            catch /^Vim\%((\a\+)\)\=:E37/
+                " TODO Not sure how we get into this case.
+                echom "ListVimHooks: Exception case 1"
+                " call nerdtree#putCursorInTreeWin() " TODO
+                throw "VimHooks.FileAlreadyOpenAndModifiedError: ". self._path.str() ." is already open and modified."
+            catch /^Vim\%((\a\+)\)\=:/
+                " TODO Not sure how we get into this case.
+                echom "ListVimHooks: Exception case 2"
+                echo v:exception
+            endtry
+        endif
+    endif
 endfunction
