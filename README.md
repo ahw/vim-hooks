@@ -1,30 +1,7 @@
-Introduction
-============
-This is a Vim plugin that looks for specially-named scripts in your current
-working directory (as well as `~/.vimhooks/`) that have names like
-`.bufwritepost.vimhook.rb` or `.cursorhold.vimhook.sh` and executes those
-scripts whenever &ndash; in this example &ndash; Vim fires the
-`BufWritePost` and `CursorHold` `autocmd` events, respectively. I wrote this
-plugin specifically to ease the write-save-switch-reload pain of web
-development, and my most salient use case so far is the ability to
-auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`)
-in Vim, though I have a feeling there are a lot of other interesting use
-cases out there. If you've ever wanted an easy way of hooking arbitrary
-shell scripts into Vim events, this is for you.
-
-In the next sections I'll describe how to install the **vim-hooks** plugin,
-give a bit of background on `autocommands` and events in Vim, and then explain
-in detail how to use **vim-hooks**. But first, here is your obligatory
-live-demo gif.  For reference, it's making use of three VimHook scripts:
-
-1. [`.000.bufwritepost.vimhook.sh`](https://github.com/ahw/ahw/vim-hooks/blob/master/examples/.000.bufwritepost.vimhook.sh) to compile a Sass file, 
-2. [`.001.bufwritepost.vimhook.applescript`](https://github.com/ahw/ahw/vim-hooks/blob/master/examples/.001.bufwritepost.vimhook.applescript) to reload Firefox and Safari, and
-3. [`~/.vimhooks/.bufwritepost.vimhook.sh`](https://github.com/ahw/ahw/vim-hooks/blob/master/examples/.bufwritepost.vimhook.chrome-reloader.sh) to reload Chrome.
-
-![VimHooks GIF](http://g.recordit.co/CITvKXJOFe.gif)
-
-Contents
-========
+Vim Hooks
+=========
+- [Introduction](#introduction)
+- [Demo](#demo)
 - [Installation](#installation)
 - [Background: What is an autocmd?](#background-what-is-an-autocommand)
 - [How to name VimHook scripts](#how-to-name-vimhook-scripts)
@@ -40,7 +17,36 @@ Contents
     - [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
     - [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
     - [Log editing events for future analytics](#log-editing-events-for-future-analytics)
-- [More gifs](#more-gifs)
+
+Introduction
+============
+This is a Vim plugin that looks for specially-named scripts in your current
+working directory (as well as `~/.vimhooks/`) that have names like
+`.bufwritepost.vimhook.rb` or `.cursorhold.vimhook.sh` and executes those
+scripts whenever &ndash; in this example &ndash; Vim fires the
+`BufWritePost` and `CursorHold` `autocmd` events, respectively. I wrote this
+plugin specifically to ease the write-save-switch-reload pain of web
+development, and my most salient use case so far is the ability to
+auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`)
+in Vim (see obnoxious flashing gif below), though I have a feeling there
+are a lot of other interesting use cases out there. If you've ever wanted an
+easy way of hooking arbitrary shell scripts into Vim events, this is for
+you.
+
+In the next sections I'll describe how to install the **vim-hooks** plugin,
+give a bit of background on `autocommands` and events in Vim, and then explain
+in detail how to use **vim-hooks**.
+
+Demo
+====
+Here is your obligatory live-demo gif.  For reference, it's making use of
+three VimHook scripts which I've put in the `examples/` dir:
+
+1. [`.000.bufwritepost.vimhook.sh`](https://github.com/ahw/vim-hooks/blob/master/examples/.000.bufwritepost.vimhook.sh) to compile a Sass file, 
+2. [`.001.bufwritepost.vimhook.applescript`](https://github.com/ahw/vim-hooks/blob/master/examples/.001.bufwritepost.vimhook.applescript) to reload Firefox and Safari, and
+3. [`~/.vimhooks/.bufwritepost.vimhook.sh`](https://github.com/ahw/vim-hooks/blob/master/examples/.bufwritepost.vimhook.chrome-reloader.sh) to reload Chrome.
+
+![VimHooks GIF](http://g.recordit.co/CITvKXJOFe.gif)
 
 Installation
 ============
@@ -192,8 +198,8 @@ Sass files? Maybe you need to copy them to another place in the filesystem.
 Maybe you're working off a remote server. Maybe &ndash; probably &ndash;
 you'd really like to see the results updated in more than just Chrome. If
 you can write the automation logic to do these things into a script,
-VimHooks will provide the mechanism for hooking that automation into any of
-the many Vim `autocmd` events.
+VimHooks will provide the mechanism for hooking that automation into any 
+Vim `autocmd` you wish.
 
 Recompile Sass files on save
 ----------------------------
@@ -398,10 +404,3 @@ bufenter for file app.js on Sun Jun 15 19:10:04 PDT 2014
 bufleave for file app.js on Sun Jun 15 19:10:05 PDT 2014
 bufenter for file _colors.scss on Sun Jun 15 19:10:05 PDT 2014
 ```
-
-More gifs
-=========
-Notice how I'm activating the
-[chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh) browser
-extension in the upper right-hander corner a few frames in.
-![VimHooks GIF](http://g.recordit.co/ciaH7KgkfM.gif)
