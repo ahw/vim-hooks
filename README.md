@@ -21,8 +21,8 @@ Vim Hooks
     - [ListVimHooks](#listvimhooks)
     - [FindHookFiles](#findhookfiles)
     - [ExecuteHookFiles](#executehookfiles)
-    - [StopExecutingHooks](#stopexecutingvimhooks)
-    - [StartExecutingHooks](#startexecutingvimhooks)
+    - [StopExecutingHooks](#stopexecutinghooks)
+    - [StartExecutingHooks](#startexecutinghooks)
 
 Introduction
 ============
