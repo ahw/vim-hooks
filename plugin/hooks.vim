@@ -191,17 +191,6 @@ function! s:listVimHooks()
     call s:openVimHookListingBuffer()
 endfunction
 
-function! s:createMarkdownHeaderText(header, level)
-    let underline = ""
-    if a:level == 1
-        let underline = "="
-    elseif a:level == 2
-        let underline = "-"
-    endif
-
-    return a:header . "\n" . repeat(underline, len(a:header))
-endfunction
-
 function! s:openVimHookListingBuffer(...)
     let width = 50
     if a:0 == 1 && type(a:1) == type(0)

@@ -18,7 +18,7 @@ Vim Hooks
     - [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
     - [Log editing events for future analytics](#log-editing-events-for-future-analytics)
 - [Commands](#commands)
-    - [ListVimHooks](#listvimhooks)
+    - [ListVimHooks (useful!)](#listvimhooks)
     - [FindHookFiles](#findhookfiles)
     - [ExecuteHookFiles](#executehookfiles)
     - [StopExecutingHooks](#stopexecutinghooks)
@@ -188,8 +188,11 @@ $ chmod u+x .bufwritepost.vimhook.sh
 
 If they do not, VimHooks will ask if you want to set the executable bit
 before running a script for the first time. If you type `y`, it will run the
-above shell command first. If you type `n`, it will leave the permissions
-as-is and ignore that script for the duration of your Vim session.
+above shell command and then execute the hook script. If you type `n`, it
+will leave the permissions as-is and then *ignore that script for the
+duration of your Vim session.*
+
+![Set Permissions GIF](http://g.recordit.co/I4hxwkypZo.gif)
 
 Example usage
 =============
@@ -423,11 +426,13 @@ mappings that allow you to interactively disable and re-enable VimHook scripts
 as well as open them in a new window. Below is a screenshot of the
 `:ListVimHooks` buffer demonstrating this functionality.
 
-Note there are two sections in this buffer: the "Mappings" section which shows
-a "cheat sheet" of the buffer-local mappings and the "Hooks" section which, for
+Note there are two sections in this buffer: the **Mappings** section which shows
+a "cheat sheet" of the buffer-local mappings and the **Hooks** section which, for
 each VimHook script, shows a checkbox indicating enabled/disabled state of the
 script, the matching pattern associated with that script, the event associated
-with that script, and the path to the script.
+with that script, and the path to the script. The `x` mapping is
+particularly useful as it allows you to quickly toggle on and off individual
+VimHook scripts as you move between projects that require different hooks.
 
 ![ListVimHooks GIF](http://g.recordit.co/o3mon5FhWu.gif)
 
@@ -439,7 +444,6 @@ The buffer-local mappings are inspired from NERDTree:
 - `o`, `<CR>` Opens a VimHook script in the previous window. (If not possible, it
   will open in a vertical split.)
 - `q`, `<ESC>` Closes the buffer
-
 
 FindHookFiles
 -------------
