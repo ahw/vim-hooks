@@ -15,6 +15,7 @@ function! s:VimHook.New(path, event, pattern)
     " the hook file is unique, even if we chop off the ".disabled" part,
     " which may or may not exist.
     let newVimHook.id = substitute(newVimHook.path, '\v.disabled$', "", "")
+    let newVimHook.baseName = get(matchlist(newVimHook.path, '\v[^/]+$'), 0, "")
 
     let newVimHook.isEnabled = 1
     if newVimHook.path =~ '\v\.disabled$'
