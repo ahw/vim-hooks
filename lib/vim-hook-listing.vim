@@ -50,14 +50,7 @@ function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
             for pattern in keys(a:patternBasedVimHooks[event])
                 for vimHookId in keys(a:patternBasedVimHooks[event][pattern])
                     let vimHook = a:patternBasedVimHooks[event][pattern][vimHookId]
-                    " This is amazing. Trying to make these regex patterns
-                    " look like UNIX-style glob patterns.
-                    let betterPattern = substitute(vimHook.pattern, '\v\\v', '', '')
-                    let betterPattern = substitute(betterPattern, '\v\^', '', '')
-                    let betterPattern = substitute(betterPattern, '\v\$', '', '')
-                    let betterPattern = substitute(betterPattern, '\v\.\*', '*', '')
-                    let betterPattern = substitute(betterPattern, '\v\\\.', '.', '')
-                    let text = self.joinWithNewline(text, '  ' . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(betterPattern, 10) . ' ' . vimHook.event . ': ' . vimHook.path)
+                    let text = self.joinWithNewline(text, '  ' . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, 10) . ' ' . vimHook.event . ': ' . vimHook.path)
                     let self.lineNumbersToVimHooks[currentLineNumber] = vimHook
                     let currentLineNumber += 1
                     let self.highestLine += 1

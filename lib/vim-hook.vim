@@ -22,6 +22,14 @@ function! s:VimHook.New(path, event, pattern)
         let newVimHook.isEnabled = 0
     endif
 
+    " Create a UNIX-style glob version of the pattern.
+    let unixStylePattern = substitute(a:pattern, '\v\\v', '', '')
+    let unixStylePattern = substitute(unixStylePattern, '\v\^', '', '')
+    let unixStylePattern = substitute(unixStylePattern, '\v\$', '', '')
+    let unixStylePattern = substitute(unixStylePattern, '\v\.\*', '*', '')
+    let unixStylePattern = substitute(unixStylePattern, '\v\\\.', '.', '')
+    let newVimHook.unixStylePattern = unixStylePattern
+
     let newVimHook.event = a:event
     let newVimHook.pattern = a:pattern
 
@@ -52,4 +60,8 @@ function! s:VimHook.enable()
     " Set the execute bit
     execute "silent !chmod u+x " . self.path
     let self.isEnabled = 1
+endfunction
+
+function! s:VimHook.toString()
+    return "(" . self.unixStylePattern . ", " . self.event . ", " . self.path . ")"
 endfunction

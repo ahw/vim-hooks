@@ -66,15 +66,15 @@ function! s:clearHookFiles()
 endfunction
 
 function! s:addHookFile(vimHook)
-    " if !has_key(s:patternBasedVimHooks, a:vimHook.event)
-    "     let s:patternBasedVimHooks[a:vimHook.event] = {}
-    " endif
+    if !has_key(s:patternBasedVimHooks, a:vimHook.event)
+        let s:patternBasedVimHooks[a:vimHook.event] = {}
+    endif
 
-    " if !has_key(s:patternBasedVimHooks[a:vimHook.event], a:vimHook.pattern)
-    "     let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern] = {}
-    " endif
+    if !has_key(s:patternBasedVimHooks[a:vimHook.event], a:vimHook.pattern)
+        let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern] = {}
+    endif
 
-    " let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern][a:vimHook.id] = a:vimHook
+    let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern][a:vimHook.id] = a:vimHook
 
     call add(s:allVimHooks, a:vimHook)
 endfunction
@@ -141,25 +141,30 @@ function! s:compareVimHooks(first, second)
 endfunction
 
 
+" Accepts a variable number of event names and executes the hook files
+" corresponding to each. This will typically be called with a single
+" event, unless the user manually calls :ExecuteHookFiles Event1, Event2.
+" As a reminder, 
+" a:0 => number of extra args
+" a:1 => first extra arg
+" a:2 => second extra arg
+" a:000 => all the extra args in a List
 function! s:executeHookFiles(...)
     if !s:shouldExecuteHooks()
         " Return early if hooks have been manually disabled via :StopExecutingHooks
         return
     endif
-    " Accepts a variable number of event names and executes the hook files
-    " corresponding to each. This will typically be called with a single
-    " event, unless the user manually calls :ExecuteHookFiles Event1, Event2.
-    " As a reminder, 
-    " a:0 => number of extra args
-    " a:1 => first extra arg
-    " a:2 => second extra arg
-    " a:000 => all the extra args in a List
 
+    " The base filename. /path/to/some/file.txt => file.txt
     let filename = get(matchlist(getreg('%'), '\v([^/]+)$'), 1, "")
-    for eventname in a:000
-        let eventname = tolower(eventname)
+
+    " If we do not yet have an associated list of VimHooks with this
+    " filename, then create one by iterating through all the known VimHooks
+    " and adding any of them whose pattern matches against this filename.
+    if !has_key(s:vimHooksByFilename, filename)
+        let s:vimHooksByFilename[filename] = []
         for vimHook in s:allVimHooks
-            if filename =~ vimHook.pattern && eventname ==? vimHook.event
+            if filename =~ vimHook.pattern
                 " Add this VimHook to the dictionary of vimhooks by
                 " filename. This dictionary contains a key for each
                 " unique filename (base name) we encounter and an
@@ -167,20 +172,40 @@ function! s:executeHookFiles(...)
                 " sorted order according to the s:compareVimHooks
                 " function, which just sorts them by their baseName
                 " property.
-                if !has_key(s:vimHooksByFilename, filename)
-                    let s:vimHooksByFilename[filename] = []
-                endif
-
                 call sort(add(s:vimHooksByFilename[filename], vimHook), "s:compareVimHooks")
             endif
         endfor
-    endfor
+    endif
 
-    " debugging
-    for vimHook in s:vimHooksByFilename[filename]
-        echo "> would execute " . vimHook.baseName . " (full path: " . vimHook.path . ")"
+    for eventname in a:000
+        let eventname = tolower(eventname)
+        for vimHook in s:vimHooksByFilename[filename]
+            if filename =~ vimHook.pattern && eventname ==? vimHook.event
+                if s:isAnExecutableFile(vimHook.path) && !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
+                    echom "[vim-hooks] Executing hookfile " . vimHook.path . " after event " . vimHook.event
+                    execute '!' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
+                    redraw!
+                elseif !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
+                    " Assert: hookfile is not executable, but also not
+                    " ignoreable. Prompt user to set executable bit or to
+                    " start ignoring.
+                    echohl WarningMsg
+                    echo "[vim-hooks] Could not execute script " . vimHook.path . " because it does not have \"execute\" permissions.\nSet executable bit (chmod u+x) [yn]? "
+                    let key = nr2char(getchar())
+                    if key ==# 'y'
+                        echom "Running chmod u+x " . vimHook.path
+                        execute "!chmod u+x " . vimHook.path
+                    elseif key ==# 'n'
+                        call s:addIgnoreableHookFile(vimHook.path)
+                    endif
+                    echohl None
+                else
+                    " Assert: we must be ignoring this file or it is permanently
+                    " disabled. Do nothing.
+                endif
+            endif
+        endfor
     endfor
-    " LEFT OFF HERE
 
     " for eventname in a:000
     "     let eventname = tolower(eventname)
@@ -265,7 +290,7 @@ aug VimHookGroup
     au BufUnload * call s:executeHookFiles('BufUnload')
     au BufWinLeave * call s:executeHookFiles('BufWinLeave')
     au BufWritePost * call s:executeHookFiles('BufWritePost')
-    au CursorHold * call s:executeHookFiles('CursorHold')
+    " au CursorHold * call s:executeHookFiles('CursorHold')
     " au CursorMoved * call s:executeHookFiles('CursorMoved')
 aug END
 
