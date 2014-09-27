@@ -1,7 +1,6 @@
 runtime lib/vim-hook.vim
 runtime lib/vim-hook-listing.vim
 
-let s:patternBasedVimHooks = {}
 let s:allVimHooks = []
 let s:vimHooksByFilename = {}
 
@@ -66,15 +65,15 @@ function! s:clearHookFiles()
 endfunction
 
 function! s:addHookFile(vimHook)
-    if !has_key(s:patternBasedVimHooks, a:vimHook.event)
-        let s:patternBasedVimHooks[a:vimHook.event] = {}
-    endif
+    " if !has_key(s:patternBasedVimHooks, a:vimHook.event)
+    "     let s:patternBasedVimHooks[a:vimHook.event] = {}
+    " endif
 
-    if !has_key(s:patternBasedVimHooks[a:vimHook.event], a:vimHook.pattern)
-        let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern] = {}
-    endif
+    " if !has_key(s:patternBasedVimHooks[a:vimHook.event], a:vimHook.pattern)
+    "     let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern] = {}
+    " endif
 
-    let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern][a:vimHook.id] = a:vimHook
+    " let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern][a:vimHook.id] = a:vimHook
 
     call add(s:allVimHooks, a:vimHook)
 endfunction
@@ -267,7 +266,7 @@ function! s:openVimHookListingBuffer(...)
     set nowrap
     setfiletype hooks
 
-    let @t = g:VimHookListing.getVimHookListingText(s:patternBasedVimHooks)
+    let @t = g:VimHookListing.getVimHookListingText(s:allVimHooks)
     silent put t
     execute "0"
     execute "delete"

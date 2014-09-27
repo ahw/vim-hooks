@@ -24,7 +24,7 @@ function! s:VimHookListing.isCheckboxLine(num)
     endif
 endfunction
 
-function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
+function! s:VimHookListing.getVimHookListingText(allVimHooks)
     let checkedbox = '[x]'
     let uncheckedbox = '[ ]'
 
@@ -45,17 +45,12 @@ function! s:VimHookListing.getVimHookListingText(patternBasedVimHooks)
     let self.lowestLine = currentLineNumber
     let self.highestLine = currentLineNumber
 
-    if len(keys(a:patternBasedVimHooks))
-        for event in keys(a:patternBasedVimHooks)
-            for pattern in keys(a:patternBasedVimHooks[event])
-                for vimHookId in keys(a:patternBasedVimHooks[event][pattern])
-                    let vimHook = a:patternBasedVimHooks[event][pattern][vimHookId]
-                    let text = self.joinWithNewline(text, '  ' . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, 10) . ' ' . vimHook.event . ': ' . vimHook.path)
-                    let self.lineNumbersToVimHooks[currentLineNumber] = vimHook
-                    let currentLineNumber += 1
-                    let self.highestLine += 1
-                endfor
-            endfor
+    if len(a:allVimHooks)
+        for vimHook in a:allVimHooks
+            let text = self.joinWithNewline(text, '  ' . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, 10) . ' ' . self.pad(vimHook.event, 15) . ': ' . vimHook.path)
+            let self.lineNumbersToVimHooks[currentLineNumber] = vimHook
+            let currentLineNumber += 1
+            let self.highestLine += 1
         endfor
     else
         let text = self.joinWithNewline(text, " No hook files found!")
