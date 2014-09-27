@@ -32,6 +32,7 @@ function! s:VimHook.New(path, event, pattern)
 
     let newVimHook.event = a:event
     let newVimHook.pattern = a:pattern
+    let newVimHook.isIgnoreable = 0
 
     return newVimHook
 endfunction
@@ -62,6 +63,10 @@ function! s:VimHook.enable()
     let self.isEnabled = 1
 endfunction
 
+function! s:VimHook.ignore()
+    let self.isIgnoreable = 1
+endfunction
+
 function! s:VimHook.toString()
-    return "(" . self.unixStylePattern . ", " . self.event . ", " . self.path . ")"
+    return self.unixStylePattern . " " . self.event . " (" . self.path . ")"
 endfunction

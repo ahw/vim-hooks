@@ -42,18 +42,6 @@ function! s:isIgnoreable(baseName)
     return 0
 endfunction
 
-function! s:addIgnoreableHookFile(hookfile)
-    let s:ignoreableHookFiles[a:hookfile] = 1
-endfunction
-
-function! s:isIgnoreableHookFile(hookfile)
-    if has_key(s:ignoreableHookFiles, a:hookfile)
-        return 1
-    else
-        return 0
-    endif
-endfunction
-
 function! s:isAnExecutableFile(filename)
     return getfperm(a:filename) =~ '\v^..x'
 endfunction
@@ -176,15 +164,23 @@ function! s:executeHookFiles(...)
         endfor
     endif
 
+    echom "Sorted List for file name " . filename
+    for hook in s:vimHooksByFilename[filename]
+        echom "  " . hook.baseName
+    endfor
+
     for eventname in a:000
         let eventname = tolower(eventname)
+        " echom "Event name: " . eventname . ", filename: " . filename
         for vimHook in s:vimHooksByFilename[filename]
+            " echom "  Checking vimHook " . vimHook.pattern . " " . vimHook.event . " " . vimHook.path
             if filename =~ vimHook.pattern && eventname ==? vimHook.event
-                if s:isAnExecutableFile(vimHook.path) && !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
-                    echom "[vim-hooks] Executing hookfile " . vimHook.path . " after event " . vimHook.event
+                if s:isAnExecutableFile(vimHook.path) && !vimHook.isIgnoreable && vimHook.isEnabled
+                    echom "[vim-hooks] Executing hookfile " . vimHook.toString() . " after event " . vimHook.event
                     execute '!' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
                     redraw!
-                elseif !s:isIgnoreableHookFile(vimHook.path) && vimHook.isEnabled
+                    " echom "  > Executed " . vimHook.toString()
+                elseif !vimHook.isIgnoreable && vimHook.isEnabled
                     " Assert: hookfile is not executable, but also not
                     " ignoreable. Prompt user to set executable bit or to
                     " start ignoring.
@@ -195,13 +191,23 @@ function! s:executeHookFiles(...)
                         echom "Running chmod u+x " . vimHook.path
                         execute "!chmod u+x " . vimHook.path
                     elseif key ==# 'n'
-                        call s:addIgnoreableHookFile(vimHook.path)
+                        call vimHook.ignore()
                     endif
                     echohl None
+                    " echom "    Did not execute because of execute permissions " . vimHook.toString()
+                elseif vimHook.isIgnoreable
+                    " echom "    Did not execute because it is ignoreable " . vimHook.toString()
+                elseif !vimHook.isEnabled
+                    " echom "    Did not execute because it is not enabled " . vimHook.toString()
                 else
                     " Assert: we must be ignoring this file or it is permanently
                     " disabled. Do nothing.
+                    " echom "    Did not execute because of some unknown reason" . vimHook.toString()
                 endif
+            elseif filename !~ vimHook.pattern
+                " echom "    Did not execute because filename " . filename . " does not match " . vimHook.unixStylePattern
+            elseif eventname !=? vimHook.event
+                " echom "    Did not execute because event " . eventname . " does not match " . vimHook.event
             endif
         endfor
     endfor
