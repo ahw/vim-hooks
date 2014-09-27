@@ -124,7 +124,19 @@ function! s:findHookFiles()
 endfunction
 
 function! s:compareVimHooks(first, second)
-    return get(sort([a:first.baseName, a:second.baseName]), 0)
+    " From :help sort()
+    " When {func} is a |Funcref| or a function name, this function is called
+    " to compare items.  The function is invoked with two items as argument
+    " and must return zero if they are equal, 1 or bigger if the first one
+    " sorts after the second one, -1 or smaller if the first one sorts
+    " before the second one.
+    echom "Comparing " . a:first.baseName . " and " . a:second.baseName
+    if a:first.baseName == a:second.baseName
+        return 0
+    elseif a:first.baseName < a:second.baseName
+        return -1
+    else
+        return 1
 endfunction
 
 
@@ -144,6 +156,11 @@ function! s:executeHookFiles(...)
 
     " The base filename. /path/to/some/file.txt => file.txt
     let filename = get(matchlist(getreg('%'), '\v([^/]+)$'), 1, "")
+    if filename == ""
+        " Return early if the filename is empty (e.g. when just running
+        " "vim" without any arguments)
+        return
+    endif
 
     " If we do not yet have an associated list of VimHooks with this
     " filename, then create one by iterating through all the known VimHooks
@@ -152,6 +169,7 @@ function! s:executeHookFiles(...)
         let s:vimHooksByFilename[filename] = []
         for vimHook in s:allVimHooks
             if filename =~ vimHook.pattern
+                echom "About sort insert a new vimhooks with base name " . vimHook.baseName
                 " Add this VimHook to the dictionary of vimhooks by
                 " filename. This dictionary contains a key for each
                 " unique filename (base name) we encounter and an
