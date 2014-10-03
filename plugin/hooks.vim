@@ -47,9 +47,8 @@ function! s:isAnExecutableFile(filename)
 endfunction
 
 function! s:clearHookFiles()
-    let s:globalHookFiles = {}
-    let s:extensionSpecificHookFiles = {}
-    let s:fileSpecificHookFiles = {}
+    let s:allVimHooks = []
+    let s:vimHooksByFilename = {}
 endfunction
 
 function! s:addHookFile(vimHook)
