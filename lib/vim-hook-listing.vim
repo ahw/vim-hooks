@@ -6,6 +6,7 @@ let g:VimHookListing = s:VimHookListing
 let s:VimHookListing.lineNumbersToVimHooks = {}
 let s:VimHookListing.lowestLine = 0
 let s:VimHookListing.highestLine = 0
+let s:VimHookListing.columnWidths = { 'pattern': 0, 'event': 0, 'path': 0 }
 
 function! s:VimHookListing.pad(s, amt)
     return a:s . repeat(' ', a:amt - len(a:s))
@@ -13,6 +14,12 @@ endfunction
 
 function! s:VimHookListing.joinWithNewline(lines, anotherLine)
     return a:lines . "\n" . a:anotherLine
+endfunction
+
+function! s:VimHookListing.updateColumnWidths(vimHook)
+    let self.columnWidths['pattern'] = max([len(a:vimHook.unixStylePattern), self.columnWidths['pattern']])
+    let self.columnWidths['event'] = max([len(a:vimHook.event), self.columnWidths['event']])
+    let self.columnWidths['path'] = max([len(a:vimHook.path), self.columnWidths['path']])
 endfunction
 
 function! s:VimHookListing.isCheckboxLine(num)
@@ -47,7 +54,7 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
 
     if len(a:allVimHooks)
         for vimHook in a:allVimHooks
-            let text = self.joinWithNewline(text, '  ' . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, 10) . ' ' . self.pad(vimHook.event, 15) . ': ' . vimHook.path)
+            let text = self.joinWithNewline(text, '  ' . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, self.columnWidths.pattern + 2) . self.pad(vimHook.event, self.columnWidths.event + 2) . vimHook.path)
             let self.lineNumbersToVimHooks[currentLineNumber] = vimHook
             let currentLineNumber += 1
             let self.highestLine += 1

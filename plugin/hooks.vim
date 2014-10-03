@@ -62,6 +62,7 @@ function! s:addHookFile(vimHook)
 
     " let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern][a:vimHook.id] = a:vimHook
 
+    call g:VimHookListing.updateColumnWidths(a:vimHook)
     call add(s:allVimHooks, a:vimHook)
 endfunction
 
