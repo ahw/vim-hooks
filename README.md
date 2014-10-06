@@ -8,8 +8,14 @@ Vim Hooks
     - [Global VimHooks](#global-vimhooks)
     - [Extension-specific VimHooks](#extension-specific-vimhooks)
     - [File-specific VimHooks](#file-specific-vimhooks)
-- [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
+- [Commands](#commands)
+    - [ListVimHooks (useful!)](#listvimhooks)
+    - [FindHookFiles](#findhookfiles)
+    - [ExecuteHookFiles](#executehookfiles)
+    - [StopExecutingHooks](#stopexecutinghooks)
+    - [StartExecutingHooks](#startexecutinghooks)
 - [Permissions](#permissions)
+- [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
 - [Example usage](#example-usage)
     - [Recompile Sass files on save](#recompile-sass-files-on-save)
     - [Reload Chrome tabs after recompiling Sass files](#reload-chrome-tabs-after-recompiling-sass-files)
@@ -17,12 +23,6 @@ Vim Hooks
     - [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
     - [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
     - [Log editing events for future analytics](#log-editing-events-for-future-analytics)
-- [Commands](#commands)
-    - [ListVimHooks (useful!)](#listvimhooks)
-    - [FindHookFiles](#findhookfiles)
-    - [ExecuteHookFiles](#executehookfiles)
-    - [StopExecutingHooks](#stopexecutinghooks)
-    - [StartExecutingHooks](#startexecutinghooks)
 
 Introduction
 ============
@@ -102,6 +102,7 @@ example, use `$1` and `$2` to access these values (see [example
 usage](#example-usage)). Currently this plugin only supports synchronous
 execution of the `*.vimhook` scripts, but I hope to implement asynchronous
 execution later.
+
    
 Global VimHooks
 ---------------
@@ -151,6 +152,79 @@ only be executed when the `BufWritePost` event is fired from the `README.md`
 buffer; the VimHook named `app.js.bufenter.vimhook.py`  will only be executed
 when the `BufEnter` evente is fired from the `app.js` buffer.
 
+Commands
+========
+ListVimHooks
+------------
+The `:ListVimHooks` command takes zero arguments. It opens a new
+unmodifiable buffer in a horizontal split which lists all of the VimHook script
+files the plugin has found after scanning the current working directory as
+well as the `~/.vimhooks/` directory. The buffer has a few buffer-only key
+mappings that allow you to interactively disable and re-enable VimHook scripts
+as well as open them in a new window. Below is a screenshot of the
+`:ListVimHooks` buffer demonstrating this functionality.
+
+Note there are two sections in this buffer: the **Mappings** section which shows
+a "cheat sheet" of the buffer-local mappings and the **Hooks** section which, for
+each VimHook script, shows a checkbox indicating enabled/disabled state of the
+script, the matching pattern associated with that script (where `*` represents a
+UNIX-style blob), the event associated
+with that script, and the path to the script. The `x` mapping is
+particularly useful as it allows you to quickly toggle on and off individual
+VimHook scripts as you move between projects that require different hooks.
+
+![ListVimHooks GIF](http://g.recordit.co/o3mon5FhWu.gif)
+
+The buffer-local mappings are inspired from NERDTree:
+- `x` Toggles the enabled/disabled state of a VimHook script (this only has
+  an effect when on one of the lines in the "Hooks" section.
+- `s` Opens a VimHook script in a vertical split
+- `i` Opens a VimHook script in a horizontal split
+- `o`, `<CR>` Opens a VimHook script in the previous window. (If not possible, it
+  will open in a vertical split.)
+- `q`, `<ESC>` Closes the buffer
+
+FindHookFiles
+-------------
+The `:FindHookFiles` command re-runs the same initializing logic **vim-hooks**
+runs when you start Vim with the plugin installed. It will "forget" any VimHook
+scripts it may have previously found and re-scan the current working directory
+as well as the `~/.vimhooks/` directory. Use this command if you have created a
+new VimHook script and want to start using it without closing and re-opening
+your entire Vim session.
+
+ExecuteHookFiles
+----------------
+The `:ExecuteHookFiles` command takes a single argument which is the name of
+a Vim `autocmd` you would like to manually "trigger." The event name can be
+tab-completed. For example, if you would like to verify the VimHook scripts
+listening for the `VimEnter` event are functioning correctly you can manually
+fire them off by running `:ExecuteHookFiles VimEnter`.
+
+StopExecutingHooks
+------------------
+The `:StopExecutingHooks` command will temporarily disable triggering of all VimHook scripts.
+
+StartExecutingHooks
+-------------------
+The `:StartExecutingHooks` command turns VimHook script triggering back on.
+
+Permissions
+============
+Ensure that your VimHook scripts have the "execute" bit set. For example,
+
+```
+$ chmod u+x .bufwritepost.vimhook.sh
+```
+
+If they do not, VimHooks will ask if you want to set the executable bit
+before running a script for the first time. If you type `y`, it will run the
+above shell command and then execute the hook script. If you type `n`, it
+will leave the permissions as-is and then *ignore that script for the
+duration of your Vim session.*
+
+![Set Permissions GIF](http://g.recordit.co/I4hxwkypZo.gif)
+
 Which autocmd events are exposed by Vim Hooks?
 ==============================================
 Currently, **vim-hooks** responds to
@@ -177,22 +251,6 @@ manually you can tweak the plugin by just following the example of what is
 already in place for `BufWritePost`, `CursorHold`, and the other events listed
 above (you'll find them easily by grepping the code). You can also raise an issue
 or pull request.
-
-Permissions
-============
-Ensure that your VimHook scripts have the "execute" bit set. For example,
-
-```
-$ chmod u+x .bufwritepost.vimhook.sh
-```
-
-If they do not, VimHooks will ask if you want to set the executable bit
-before running a script for the first time. If you type `y`, it will run the
-above shell command and then execute the hook script. If you type `n`, it
-will leave the permissions as-is and then *ignore that script for the
-duration of your Vim session.*
-
-![Set Permissions GIF](http://g.recordit.co/I4hxwkypZo.gif)
 
 Example usage
 =============
@@ -414,58 +472,3 @@ bufleave for file app.js on Sun Jun 15 19:10:05 PDT 2014
 bufenter for file _colors.scss on Sun Jun 15 19:10:05 PDT 2014
 ```
 
-Commands
-========
-ListVimHooks
-------------
-The `:ListVimHooks` command takes zero arguments. It opens a new
-unmodifiable buffer in a horizontal split which lists all of the VimHook script
-files the plugin has found after scanning the current working directory as
-well as the `~/.vimhooks/` directory. The buffer has a few buffer-only key
-mappings that allow you to interactively disable and re-enable VimHook scripts
-as well as open them in a new window. Below is a screenshot of the
-`:ListVimHooks` buffer demonstrating this functionality.
-
-Note there are two sections in this buffer: the **Mappings** section which shows
-a "cheat sheet" of the buffer-local mappings and the **Hooks** section which, for
-each VimHook script, shows a checkbox indicating enabled/disabled state of the
-script, the matching pattern associated with that script, the event associated
-with that script, and the path to the script. The `x` mapping is
-particularly useful as it allows you to quickly toggle on and off individual
-VimHook scripts as you move between projects that require different hooks.
-
-![ListVimHooks GIF](http://g.recordit.co/o3mon5FhWu.gif)
-
-The buffer-local mappings are inspired from NERDTree:
-- `x` Toggles the enabled/disabled state of a VimHook script (this only has
-  an effect when on one of the lines in the "Hooks" section.
-- `s` Opens a VimHook script in a vertical split
-- `i` Opens a VimHook script in a horizontal split
-- `o`, `<CR>` Opens a VimHook script in the previous window. (If not possible, it
-  will open in a vertical split.)
-- `q`, `<ESC>` Closes the buffer
-
-FindHookFiles
--------------
-The `:FindHookFiles` command re-runs the same initializing logic **vim-hooks**
-runs when you start Vim with the plugin installed. It will "forget" any VimHook
-scripts it may have previously found and re-scan the current working directory
-as well as the `~/.vimhooks/` directory. Use this command if you have created a
-new VimHook script and want to start using it without closing and re-opening
-your entire Vim session.
-
-ExecuteHookFiles
-----------------
-The `:ExecuteHookFiles` command takes a single argument which is the name of
-a Vim `autocmd` you would like to manually "trigger." The event name can be
-tab-completed. For example, if you would like to verify the VimHook scripts
-listening for the `VimEnter` event are functioning correctly you can manually
-fire them off by running `:ExecuteHookFiles VimEnter`.
-
-StopExecutingHooks
-------------------
-The `:StopExecutingHooks` command will temporarily disable triggering of all VimHook scripts.
-
-StartExecutingHooks
--------------------
-The `:StartExecutingHooks` command turns VimHook script triggering back on.
