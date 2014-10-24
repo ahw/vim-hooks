@@ -2,6 +2,9 @@ runtime lib/vim-hook.vim
 runtime lib/vim-hook-listing.vim
 
 let s:allVimHooks = []
+let s:nextGlobalHookIndex = 0
+let s:nextExtensionHookIndex = 0
+let s:nextFilenameHookIndex = 0
 let s:vimHooksByFilename = {}
 
 " Flag to toggle hook execution globally
@@ -49,11 +52,30 @@ endfunction
 function! s:clearHookFiles()
     let s:allVimHooks = []
     let s:vimHooksByFilename = {}
+    let s:nextGlobalHookIndex = 0
+    let s:nextExtensionHookIndex = 0
+    let s:nextFilenameHookIndex = 0
 endfunction
 
-function! s:addHookFile(vimHook)
+function! s:addHookFile(vimHook, scope)
     call g:VimHookListing.updateColumnWidths(a:vimHook)
-    call add(s:allVimHooks, a:vimHook)
+    if a:scope == 'global'
+        call insert(s:allVimHooks, a:vimHook, s:nextGlobalHookIndex)
+        let s:nextGlobalHookIndex += 1
+        let s:nextExtensionHookIndex += 1
+        let s:nextFilenameHookIndex += 1
+    elseif  a:scope == 'extension'
+        call insert(s:allVimHooks, a:vimHook, s:nextExtensionHookIndex)
+        let s:nextExtensionHookIndex += 1
+        let s:nextFilenameHookIndex += 1
+    elseif a:scope == 'filename'
+        call insert(s:allVimHooks, a:vimHook, s:nextFilenameHookIndex)
+        let s:nextFilenameHookIndex += 1
+    else
+        " Um, just put it at the end
+        call insert(s:allVimHooks, a:vimHook, s:nextFilenameHookIndex)
+        let s:nextFilenameHookIndex += 1
+    endif
 endfunction
 
 function! s:findHookFiles()
@@ -84,11 +106,11 @@ function! s:findHookFiles()
                 let ext = get(hiddenFileMatches, 3, "")
 
                 if len(ext)
-                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*\.' . ext))
+                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*\.' . ext), 'extension')
                 else
                     " If the empty string is passed, this will become a
                     " global hook, which is what we want.
-                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*'))
+                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*'), 'global')
                 endif
             else
                 " Normal (i.e., not hidden) file case. Intended for when
@@ -107,7 +129,7 @@ function! s:findHookFiles()
                 let filename = get(singleFileMatches, 1, "")
                 let eventname = get(singleFileMatches, 2, "")
 
-                call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v^' . filename . '$'))
+                call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v^' . filename . '$'), 'filename')
             endif
         endif
     endfor

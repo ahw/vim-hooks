@@ -5,8 +5,7 @@ let g:VimHookListing = s:VimHookListing
 
 let s:VimHookListing.vimHooksByListingIndex = []
 let s:VimHookListing.lowestLine = 0
-" Set some defaults just in case.
-let s:VimHookListing.columnWidths = { 'pattern': 25, 'event': 15, 'path': 0 }
+let s:VimHookListing.columnWidths = { 'pattern': 0, 'event': 0, 'path': 0 }
 
 function! s:VimHookListing.pad(s, amt)
     return a:s . repeat(' ', a:amt - len(a:s))
