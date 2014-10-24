@@ -5,7 +5,6 @@ let g:VimHookListing = s:VimHookListing
 
 let s:VimHookListing.vimHooksByListingIndex = []
 let s:VimHookListing.lowestLine = 0
-" let s:VimHookListing.highestLine = 0
 " Set some defaults just in case.
 let s:VimHookListing.columnWidths = { 'pattern': 25, 'event': 15, 'path': 0 }
 
@@ -57,7 +56,6 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
     let enabledHooksIndex = 0
     let disabledHooksIndex = 0
     let self.listingIndexOffset = self.lowestLine
-    " let self.highestLine = currentLineNumber
 
     let enabledHooksText = ""
     let disabledHooksText = ""
@@ -74,9 +72,6 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
                 call insert(self.vimHooksByListingIndex, vimHook, disabledHooksIndex)
                 let disabledHooksIndex += 1
             endif
-            " let self.vimHooksByListingIndex[currentLineNumber] = vimHook
-            " let currentLineNumber += 1
-            " let self.highestLine += 1
         endfor
         " The blocks of text listing enabled and disabled hooks already has
         " newlines in the right places. Just concatenate.
@@ -85,7 +80,6 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
         let text = s:joinWithNewline(text, " No hook files found!")
         let text = s:joinWithNewline(text, " See :help vim-hook-examples. Or visit https://github.com/ahw/vim-hooks#example-usage")
     endif
-    " let self.highestLine -= 1 " Since the last increment doesn't count
 
     return text
 endfunction
@@ -101,7 +95,6 @@ function! s:VimHookListing.toggleLine()
         " calling the toggleIsEnabled() function on the appropriate
         " VimHook and then changing the text to match.
 
-        echom ">>> toggling vimhook at index " . index . " which is " . self.vimHooksByListingIndex[index].toString()
         call self.vimHooksByListingIndex[index].toggleIsEnabled()
 
         let checked = get(matchlist(line, '\v\[(.)\]'), 1, "") == " " ? 0 : 1

@@ -52,16 +52,6 @@ function! s:clearHookFiles()
 endfunction
 
 function! s:addHookFile(vimHook)
-    " if !has_key(s:patternBasedVimHooks, a:vimHook.event)
-    "     let s:patternBasedVimHooks[a:vimHook.event] = {}
-    " endif
-
-    " if !has_key(s:patternBasedVimHooks[a:vimHook.event], a:vimHook.pattern)
-    "     let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern] = {}
-    " endif
-
-    " let s:patternBasedVimHooks[a:vimHook.event][a:vimHook.pattern][a:vimHook.id] = a:vimHook
-
     call g:VimHookListing.updateColumnWidths(a:vimHook)
     call add(s:allVimHooks, a:vimHook)
 endfunction
