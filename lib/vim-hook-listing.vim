@@ -3,17 +3,22 @@
 let s:VimHookListing = {}
 let g:VimHookListing = s:VimHookListing
 
-let s:VimHookListing.lineNumbersToVimHooks = {}
+let s:VimHookListing.vimHooksByListingIndex = []
 let s:VimHookListing.lowestLine = 0
-let s:VimHookListing.highestLine = 0
-let s:VimHookListing.columnWidths = { 'pattern': 0, 'event': 0, 'path': 0 }
+" let s:VimHookListing.highestLine = 0
+" Set some defaults just in case.
+let s:VimHookListing.columnWidths = { 'pattern': 25, 'event': 15, 'path': 0 }
 
 function! s:VimHookListing.pad(s, amt)
     return a:s . repeat(' ', a:amt - len(a:s))
 endfunction
 
-function! s:VimHookListing.joinWithNewline(lines, anotherLine)
+function! s:joinWithNewline(lines, anotherLine)
     return a:lines . "\n" . a:anotherLine
+endfunction
+
+function! s:VimHookListing.getVimHookIndexByLineNum(lnum)
+    return a:lnum - self.listingIndexOffset
 endfunction
 
 function! s:VimHookListing.updateColumnWidths(vimHook)
@@ -36,34 +41,51 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
     let uncheckedbox = '[ ]'
 
     let text = 'Mappings'
-    let text = self.joinWithNewline(text, '--------')
-    let text = self.joinWithNewline(text, 'x     : enable/disable a VimHook')
-    let text = self.joinWithNewline(text, 'q     : save selections and exit')
-    let text = self.joinWithNewline(text, '<ESC> : save selections and exit (duplicate mapping)')
-    let text = self.joinWithNewline(text, 'i     : open VimHook script in split')
-    let text = self.joinWithNewline(text, 's     : open VimHook script in vertical split')
-    let text = self.joinWithNewline(text, 'o     : open VimHook script in prev window')
-    let text = self.joinWithNewline(text, '<CR>  : open VimHook script in prev window (duplicate mapping)')
-    let text = self.joinWithNewline(text, '')
-    let text = self.joinWithNewline(text, 'Hooks')
-    let text = self.joinWithNewline(text, '-----')
+    let text = s:joinWithNewline(text, '--------')
+    let text = s:joinWithNewline(text, 'x     : enable/disable a VimHook')
+    let text = s:joinWithNewline(text, 'q     : save selections and exit')
+    let text = s:joinWithNewline(text, '<ESC> : save selections and exit (duplicate mapping)')
+    let text = s:joinWithNewline(text, 'i     : open VimHook script in split')
+    let text = s:joinWithNewline(text, 's     : open VimHook script in vertical split')
+    let text = s:joinWithNewline(text, 'o     : open VimHook script in prev window')
+    let text = s:joinWithNewline(text, '<CR>  : open VimHook script in prev window (duplicate mapping)')
+    let text = s:joinWithNewline(text, '')
+    let text = s:joinWithNewline(text, 'Hooks')
+    let text = s:joinWithNewline(text, '-----')
 
-    let currentLineNumber = len(split(text, "\n")) + 1
-    let self.lowestLine = currentLineNumber
-    let self.highestLine = currentLineNumber
+    let self.lowestLine = len(split(text, "\n")) + 1
+    let enabledHooksIndex = 0
+    let disabledHooksIndex = 0
+    let self.listingIndexOffset = self.lowestLine
+    " let self.highestLine = currentLineNumber
 
+    let enabledHooksText = ""
+    let disabledHooksText = ""
     if len(a:allVimHooks)
         for vimHook in a:allVimHooks
-            let text = self.joinWithNewline(text, '  ' . (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, self.columnWidths.pattern + 2) . self.pad(vimHook.event, self.columnWidths.event + 2) . vimHook.path)
-            let self.lineNumbersToVimHooks[currentLineNumber] = vimHook
-            let currentLineNumber += 1
-            let self.highestLine += 1
+            let line = (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, self.columnWidths.pattern + 2) . self.pad(vimHook.event, self.columnWidths.event + 2) . vimHook.path
+            if vimHook.isEnabled
+                let enabledHooksText = s:joinWithNewline(enabledHooksText, line)
+                call insert(self.vimHooksByListingIndex, vimHook, enabledHooksIndex)
+                let enabledHooksIndex += 1
+                let disabledHooksIndex += 1
+            else
+                let disabledHooksText = s:joinWithNewline(disabledHooksText, line)
+                call insert(self.vimHooksByListingIndex, vimHook, disabledHooksIndex)
+                let disabledHooksIndex += 1
+            endif
+            " let self.vimHooksByListingIndex[currentLineNumber] = vimHook
+            " let currentLineNumber += 1
+            " let self.highestLine += 1
         endfor
+        " The blocks of text listing enabled and disabled hooks already has
+        " newlines in the right places. Just concatenate.
+        let text = text . enabledHooksText . disabledHooksText
     else
-        let text = self.joinWithNewline(text, " No hook files found!")
-        let text = self.joinWithNewline(text, " See :help vim-hook-examples. Or visit https://github.com/ahw/vim-hooks#example-usage")
+        let text = s:joinWithNewline(text, " No hook files found!")
+        let text = s:joinWithNewline(text, " See :help vim-hook-examples. Or visit https://github.com/ahw/vim-hooks#example-usage")
     endif
-    let self.highestLine -= 1 " Since the last increment doesn't count
+    " let self.highestLine -= 1 " Since the last increment doesn't count
 
     return text
 endfunction
@@ -71,14 +93,16 @@ endfunction
 function! s:VimHookListing.toggleLine()
     setlocal modifiable
     let lnum = line('.')
-
     let line = getline(lnum)
+    let index = self.getVimHookIndexByLineNum(lnum)
+
     if self.isCheckboxLine(lnum)
         " If this is a line beginning with checkbox, then toggle it by
         " calling the toggleIsEnabled() function on the appropriate
         " VimHook and then changing the text to match.
 
-        call self.lineNumbersToVimHooks[lnum].toggleIsEnabled()
+        echom ">>> toggling vimhook at index " . index . " which is " . self.vimHooksByListingIndex[index].toString()
+        call self.vimHooksByListingIndex[index].toggleIsEnabled()
 
         let checked = get(matchlist(line, '\v\[(.)\]'), 1, "") == " " ? 0 : 1
         let toggledLine = ""
@@ -97,8 +121,9 @@ endfunction
 
 function! s:VimHookListing.openLineInSplit(splitCommand)
     let lnum = line('.')
+    let index = self.getVimHookIndexByLineNum(lnum)
     if self.isCheckboxLine(lnum)
-        let hookFilename = self.lineNumbersToVimHooks[lnum].path
+        let hookFilename = self.vimHooksByListingIndex[index].path
         execute a:splitCommand . " " . hookFilename
     endif
 endfunction
@@ -124,7 +149,7 @@ endfunction
 function! s:VimHookListing._tryToOpenInPreviousWindow()
     let lnum = line('.')
     if self.isCheckboxLine(lnum)
-        let hookFilename = self.lineNumbersToVimHooks[lnum].path
+        let hookFilename = self.vimHooksByListingIndex[lnum].path
 
         if !hooks#isWindowUsable(winnr("#")) && hooks#firstUsableWindow() ==# -1
             " If we can't use the previous window and we don't have a usable
