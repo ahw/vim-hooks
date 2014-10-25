@@ -41,8 +41,6 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
     let text = 'Mappings'
     let text = s:joinWithNewline(text, '--------')
     let text = s:joinWithNewline(text, 'x     : enable/disable a VimHook')
-    let text = s:joinWithNewline(text, 'q     : save selections and exit')
-    let text = s:joinWithNewline(text, '<ESC> : save selections and exit (duplicate mapping)')
     let text = s:joinWithNewline(text, 'i     : open VimHook script in split')
     let text = s:joinWithNewline(text, 's     : open VimHook script in vertical split')
     let text = s:joinWithNewline(text, 'o     : open VimHook script in prev window')
@@ -140,8 +138,9 @@ endfunction
 "[STOLEN FROM NERDTREE.VIM]
 function! s:VimHookListing._tryToOpenInPreviousWindow()
     let lnum = line('.')
+    let index = self.getVimHookIndexByLineNum(lnum)
     if self.isCheckboxLine(lnum)
-        let hookFilename = self.vimHooksByListingIndex[lnum].path
+        let hookFilename = self.vimHooksByListingIndex[index].path
 
         if !hooks#isWindowUsable(winnr("#")) && hooks#firstUsableWindow() ==# -1
             " If we can't use the previous window and we don't have a usable

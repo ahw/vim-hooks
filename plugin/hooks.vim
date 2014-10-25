@@ -225,7 +225,14 @@ endfunction
 
 
 function! s:listVimHooks()
-    call s:openVimHookListingBuffer()
+    let windowNumber = bufwinnr("VimHooks Listing")
+    if bufwinnr("VimHooks Listing") == -1
+        call s:openVimHookListingBuffer()
+    else
+        echohl MoreMsg
+        echo "VimHooks Listing buffer already open! Doing nothing."
+        echohl None
+    endif
 endfunction
 
 function! s:openVimHookListingBuffer(...)
@@ -273,8 +280,8 @@ aug END
 aug VimHookListingGroup
     au!
     au FileType hooks nnoremap <silent> <buffer> x :call g:VimHookListing.toggleLine()<cr>
-    au FileType hooks nnoremap <silent> <buffer> q :call g:VimHookListing.exitBuffer()<cr>
-    au FileType hooks nnoremap <silent> <buffer> <esc> :call g:VimHookListing.exitBuffer()<cr>
+    " au FileType hooks nnoremap <silent> <buffer> q :call g:VimHookListing.exitBuffer()<cr>
+    " au FileType hooks nnoremap <silent> <buffer> <esc> :call g:VimHookListing.exitBuffer()<cr>
     au FileType hooks nnoremap <silent> <buffer> i :call g:VimHookListing.openLineInHorizontalSplit()<cr>
     au FileType hooks nnoremap <silent> <buffer> s :call g:VimHookListing.openLineInVerticalSplit()<cr>
     au FileType hooks nnoremap <silent> <buffer> o :call g:VimHookListing.openLineInPreviousWindow()<cr>
