@@ -229,9 +229,7 @@ function! s:listVimHooks()
     if bufwinnr("VimHooks Listing") == -1
         call s:openVimHookListingBuffer()
     else
-        echohl MoreMsg
         echo "VimHooks Listing buffer already open! Doing nothing."
-        echohl None
     endif
 endfunction
 
