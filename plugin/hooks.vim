@@ -198,8 +198,24 @@ function! s:executeHookFiles(...)
             if filename =~ vimHook.pattern && eventname ==? vimHook.event
                 if s:isAnExecutableFile(vimHook.path) && !vimHook.isIgnoreable && vimHook.isEnabled
                     echom "[vim-hooks] Executing hookfile " . vimHook.toString() . " after event " . vimHook.event
-                    execute '!' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
-                    redraw!
+                    let printOutput = 0
+                    if printOutput
+                        let bufferName = vimHook.path . "-output"
+                        let winnr = bufwinnr('^' . bufferName . '$')
+                        execute winnr < 0 ? 'botright new ' . bufferName : winnr . 'wincmd w'
+                        setlocal buftype=nowrite
+                        setlocal bufhidden=wipe
+                        setlocal nobuflisted
+                        setlocal noswapfile
+                        setlocal nowrap
+                        setlocal number
+                        silent! execute 'silent %!'. vimHook.path
+                        " silent! execute 'resize ' . line('$')
+                        " silent! execute 'au BufUnload <buffer> execute bufwinnr(' . bufnr('#') . ') . ''wincmd w'''
+                    else
+                        execute '!' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
+                        redraw!
+                    endif
                 elseif !vimHook.isIgnoreable && vimHook.isEnabled
                     " Assert: hookfile is not executable, but also not
                     " ignoreable. Prompt user to set executable bit or to
@@ -222,7 +238,6 @@ function! s:executeHookFiles(...)
         endfor
     endfor
 endfunction
-
 
 function! s:listVimHooks()
     let windowNumber = bufwinnr("VimHooks Listing")
