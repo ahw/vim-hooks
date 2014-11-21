@@ -244,6 +244,7 @@ function! s:openVimHookListingBuffer(...)
     setlocal bufhidden=delete
     setlocal noswapfile
     setlocal nobuflisted
+    setlocal nospell
     set nowrap
     setfiletype hooks
 
