@@ -198,9 +198,9 @@ function! s:executeHookFiles(...)
             if filename =~ vimHook.pattern && eventname ==? vimHook.event
                 if s:isAnExecutableFile(vimHook.path) && !vimHook.isIgnoreable && vimHook.isEnabled
                     echom "[vim-hooks] Executing hookfile " . vimHook.toString() . " after event " . vimHook.event
-                    let printOutput = 0
+                    let printOutput = 1
                     if printOutput
-                        let bufferName = vimHook.path . "-output"
+                        let bufferName = vimHook.baseName . ".output"
                         let winnr = bufwinnr('^' . bufferName . '$')
                         execute winnr < 0 ? 'botright new ' . bufferName : winnr . 'wincmd w'
                         setlocal buftype=nowrite
@@ -209,7 +209,12 @@ function! s:executeHookFiles(...)
                         setlocal noswapfile
                         setlocal nowrap
                         setlocal number
-                        silent! execute 'silent %!'. vimHook.path
+                        " setlocal filetype=html (for example)
+                        " Original
+                        silent execute 'silent %!'. vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
+                        " New
+                        " execute 'silent $read !'. vimHook.path
+
                         " silent! execute 'resize ' . line('$')
                         " silent! execute 'au BufUnload <buffer> execute bufwinnr(' . bufnr('#') . ') . ''wincmd w'''
                     else
