@@ -210,8 +210,11 @@ function! s:executeHookFiles(...)
                         setlocal nowrap
                         setlocal number
                         " setlocal filetype=html (for example)
+                        "
                         " Original
-                        silent execute 'silent %!'. vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
+                        execute 'silent %!'. vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
+                        call feedkeys('0')
+
                         " New
                         " execute 'silent $read !'. vimHook.path
 
