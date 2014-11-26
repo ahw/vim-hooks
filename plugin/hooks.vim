@@ -199,10 +199,17 @@ function! s:executeHookFiles(...)
                 if s:isAnExecutableFile(vimHook.path) && !vimHook.isIgnoreable && vimHook.isEnabled
                     echom "[vim-hooks] Executing hookfile " . vimHook.toString() . " after event " . vimHook.event
                     let printOutput = 1
+                    let shouldSplitVertically = 1
+                    let splitCommand = shouldSplitVertically ? 'vnew' : 'new'
                     if printOutput
-                        let bufferName = vimHook.baseName . ".output"
-                        let winnr = bufwinnr('^' . bufferName . '$')
-                        execute winnr < 0 ? 'botright new ' . bufferName : winnr . 'wincmd w'
+                        let originalBufferName = getreg('%')
+                        let outputBufferName = vimHook.baseName . ".output"
+                        let winnr = bufwinnr('^' . outputBufferName . '$')
+                        " If window doesn't exist, create a new one using
+                        " botright. If it does exist, just go to that
+                        " window number using :[n] wincmd w, which would
+                        " go to window n.
+                        execute winnr < 0 ? 'botright ' . splitCommand . ' ' . outputBufferName : winnr . 'wincmd w'
                         setlocal buftype=nowrite
                         setlocal bufhidden=wipe
                         setlocal nobuflisted
@@ -210,16 +217,10 @@ function! s:executeHookFiles(...)
                         setlocal nowrap
                         setlocal number
                         " setlocal filetype=html (for example)
-                        "
-                        " Original
-                        execute 'silent %!'. vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
-                        call feedkeys('0')
 
-                        " New
-                        " execute 'silent $read !'. vimHook.path
-
-                        " silent! execute 'resize ' . line('$')
-                        " silent! execute 'au BufUnload <buffer> execute bufwinnr(' . bufnr('#') . ') . ''wincmd w'''
+                        execute 'silent %!'. vimHook.path . ' ' . shellescape(originalBufferName) . ' ' . shellescape(vimHook.event)
+                        " Press some keys to get rid of the Press ENTER prompt
+                        call feedkeys('lh')
                     else
                         execute '!' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
                         redraw!
