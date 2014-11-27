@@ -1,7 +1,9 @@
 Vim Hooks
 =========
 - [Introduction](#introduction)
-- [Demo](#demo)
+- [Demos](#demos)
+    - [Sass Recompilation and Browser Reload](#sass-recompilation-and-browser-reload)
+    - [Buffer SQLite Output](#buffer-sqlite-output)
 - [Installation](#installation)
 - [Background: What is an autocmd?](#background-what-is-an-autocommand)
 - [How to name VimHook scripts](#how-to-name-vimhook-scripts)
@@ -34,8 +36,8 @@ scripts whenever &ndash; in this example &ndash; Vim fires the
 plugin specifically to ease the write-save-switch-reload pain of web
 development, and my most salient use case so far is the ability to
 auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`)
-in Vim (see obnoxious flashing gif below), though I have a feeling there
-are a lot of other interesting use cases out there. If you've ever wanted an
+in Vim (see obnoxious flashing gif below), though I have a feeling there are
+a lot of other interesting use cases out there. If you've ever wanted an
 easy way of hooking arbitrary shell scripts into Vim events, this is for
 you.
 
@@ -43,16 +45,35 @@ In the next sections I'll describe how to install the **vim-hooks** plugin,
 give a bit of background on `autocommands` and events in Vim, and then explain
 in detail how to use **vim-hooks**.
 
-Demo
-====
-Here is your obligatory live-demo gif.  For reference, it's making use of
-three VimHook scripts which I've put in the `examples/` dir:
+Demos
+=====
+Here is your obligatory set of live-demo gifs. The first is the original
+example I have used since creating this plugin, and the second is one I
+created recently, which makes use of the new "buffer output" feature.
+
+### Sass Recompilation and Browser Reload
+In this example I'm  making use of three VimHook scripts which I've put in the
+`examples/` dir:
 
 1. [`.000.bufwritepost.vimhook.sh`](https://github.com/ahw/vim-hooks/blob/master/examples/.000.bufwritepost.vimhook.sh) to compile a Sass file, 
 2. [`.001.bufwritepost.vimhook.applescript`](https://github.com/ahw/vim-hooks/blob/master/examples/.001.bufwritepost.vimhook.applescript) to reload Firefox and Safari, and
 3. [`~/.vimhooks/.bufwritepost.vimhook.sh`](https://github.com/ahw/vim-hooks/blob/master/examples/.bufwritepost.vimhook.chrome-reloader.sh) to reload Chrome.
 
+After each `BufWritePost` event VimHooks is recompiling the `style.scss`
+file and then reloading three different browsers using AppleScript.
+
 ![VimHooks GIF](http://g.recordit.co/CITvKXJOFe.gif)
+
+### Buffer SQLite Output
+In this example I am editing a SQL script which is executed against a
+SQLite 3 database. Because the VimHook script contains the
+`vimhook.bufferoutput` option key in a comment line, the plugin knows to
+take whatever is produced on stdout and dump it into a new scratch buffer.
+This buffer is opened in a horizontal split and subsequently refreshed after
+each new `BufWritePost` event. You can see I am changing some of the SQLite output
+format options and then editing parts of the query itself.
+
+![VimHooks Buffer Output GIF](http://pd93f014.s3.amazonaws.com/test-out-4.gif)
 
 Installation
 ============
