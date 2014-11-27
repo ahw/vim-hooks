@@ -41,11 +41,13 @@ function! s:VimHook.New(path, event, pattern)
             let matches =  matchlist(line, '\vvimhook\.([0-9A-Za-z\.]+)\s*[:=]?\s*(\w*)')
             let key = get(matches, 1, "")
             let value = get(matches, 2, "")
-            " If no value was provided, set it to a truthy value.
+            " If no value was provided, set it to a true value.
             if value == ""
                 let newVimHook.optional[key] = 1
             else
-                let newVimHook.optional[key] = value
+                " If a value was provided, try to convert booleans to
+                " true/false values
+                let newVimHook.optional[key] = s:parseOptionValue(value)
             endif
         endif
     endfor
@@ -58,11 +60,36 @@ function! s:VimHook.New(path, event, pattern)
     return newVimHook
 endfunction
 
+function! s:parseOptionValue(value)
+    " Return 1 if the value matches the string 'true' case insensitive or
+    " '1'. Return 0 if the value matches the string 'false case insensitive
+    " or '0'. Else, just echo back the string value itself.
+    if a:value =~? "true"
+        return 1
+    elseif a:value =~? "1"
+        return 1
+    elseif a:value =~? "false"
+        return 0
+    elseif a:value =~? "0"
+        return 0
+    else
+        return a:value
+    endif
+endfunction
+
 function! s:VimHook.toggleIsEnabled()
     if self.isEnabled
         call self.disable()
     else
         call self.enable()
+    endif
+endfunction
+
+function! s:VimHook.getOptionValue(key)
+    if has_key(self.optional, a:key)
+        return self.optional[a:key]
+    else
+        return 0
     endif
 endfunction
 
