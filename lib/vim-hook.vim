@@ -38,9 +38,10 @@ function! s:VimHook.New(path, event, pattern)
     let vimHookLines = readfile(newVimHook.path)
     for line in vimHookLines
         if line =~ '\vvimhook'
-            let matches =  matchlist(line, '\vvimhook\.([0-9A-Za-z\.]+)\s*[:=]\s*(\w+)')
+            let matches =  matchlist(line, '\vvimhook\.([0-9A-Za-z\.]+)\s*[:=]?\s*(\w*)')
             let key = get(matches, 1, "")
             let value = get(matches, 2, "")
+            " If no value was provided, set it to a truthy value.
             if value == ""
                 let newVimHook.optional[key] = 1
             else
