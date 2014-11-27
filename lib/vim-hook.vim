@@ -36,26 +36,48 @@ function! s:VimHook.New(path, event, pattern)
 
     let newVimHook.optional = {}
     let vimHookLines = readfile(newVimHook.path)
+    let optionDeclarationRegExp = '\vvimhook\.([0-9A-Za-z\.]+)\s*[:=]?\s*(\w*)$'
     for line in vimHookLines
-        if line =~ '\vvimhook'
-            let matches =  matchlist(line, '\vvimhook\.([0-9A-Za-z\.]+)\s*[:=]?\s*(\w*)')
+        if line =~ optionDeclarationRegExp
+            " echom "> Found line \"" . line . "\""
+            " let matches =  matchlist(line, '\vvimhook\.([0-9A-Za-z\.]+)\s*[:=]?\s*(\w*)$')
+            let matches =  matchlist(line, optionDeclarationRegExp)
             let key = get(matches, 1, "")
             let value = get(matches, 2, "")
+            " echom "> key <" . key . "> value <" . value . ">"
             " If no value was provided, set it to a true value.
-            if value == ""
+            if key == ""
+                " If our regexp didn't work, just break early
+                break
+            elseif value == ""
+                " If no value was provided then it is implicitly true.
+                "
+                " Input       | Result
+                " -----       | ------
+                " vimhook.foo | newVimHook.optional.foo = 1
                 let newVimHook.optional[key] = 1
             else
-                " If a value was provided, try to convert booleans to
-                " true/false values
+                " If a value was provided, try to convert things that look
+                " like booleans to Vim-suitable to true/false values. If
+                " that doesn't work, the parseOptionValue function will just
+                " echo back the same string value it received.
+                "
+                " Input              | Result
+                " -----              | ------
+                " vimhook.foo = true | newVimHook.optional.foo = 1
+                " vimhook.bar = 1    | newVimHook.optional.bar = 1
+                " vimhook.baz = hi   | newVimHook.optional.baz = "hi"
                 let newVimHook.optional[key] = s:parseOptionValue(value)
             endif
         endif
     endfor
 
     " Debugging
-    for key in keys(newVimHook.optional)
-        echom "The key is <" . key . "> and the value is <" . newVimHook.optional[key] . ">"
-    endfor
+    if exists("g:vimhooks_debug_mode") && g:vimhooks_debug_mode
+        for key in keys(newVimHook.optional)
+            " echom "The key is <" . key . "> and the value is <" . newVimHook.optional[key] . ">"
+        endfor
+    endif
 
     return newVimHook
 endfunction

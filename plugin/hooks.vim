@@ -198,7 +198,7 @@ function! s:executeHookFiles(...)
             if filename =~ vimHook.pattern && eventname ==? vimHook.event
                 if s:isAnExecutableFile(vimHook.path) && !vimHook.isIgnoreable && vimHook.isEnabled
                     echom "[vim-hooks] Executing hookfile " . vimHook.toString() . " after event " . vimHook.event
-                    let splitCommand = vimHook.getOptionValue('bufferoutputvertical') ? 'vnew' : 'new'
+                    let splitCommand = vimHook.getOptionValue('bufferoutput.vsplit') ? 'vnew' : 'new'
                     if vimHook.getOptionValue('bufferoutput')
                         let originalBufferName = getreg('%')
                         let outputBufferName = vimHook.baseName . ".output"
