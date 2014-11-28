@@ -5,7 +5,6 @@ Vim Hooks
     - [Sass Recompilation and Browser Reload](#sass-recompilation-and-browser-reload)
     - [Vim as REPL](#vim-as-repl)
 - [Installation](#installation)
-- [Background: What is an autocmd?](#background-what-is-an-autocommand)
 - [How to name VimHook scripts](#how-to-name-vimhook-scripts)
     - [Global VimHooks](#global-vimhooks)
     - [Extension-specific VimHooks](#extension-specific-vimhooks)
@@ -40,13 +39,15 @@ plugin specifically to ease the write-save-switch-reload pain of web
 development, and my most salient use case so far is the ability to
 auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`)
 in Vim (see obnoxious flashing gif below), though I have a feeling there are
-a lot of other interesting use cases out there. If you've ever wanted an
-easy way of hooking arbitrary shell scripts into Vim events, this is for
-you.
+a lot of other interesting use cases out there (recently I've added the
+ability to use Vim as a sort of REPL). If you've ever wanted an easy way of
+hooking arbitrary shell scripts into Vim events, this is for you.
 
 In the next sections I'll describe how to install the **vim-hooks** plugin,
 give a bit of background on `autocommands` and events in Vim, and then explain
-in detail how to use **vim-hooks**.
+in detail how to use **vim-hooks**, what additional options are available,
+and what commands the plugin exposes. If you are not familiar with
+`autocommand`s in Vim, try `:help autocommand` for an overview.
 
 Demos
 =====
@@ -58,13 +59,13 @@ created recently, which makes use of the new "buffer output" feature.
 _Recompile a Sass file and then reload Chrome, Firefox, and Safari using
 AppleScript_
 
-![VimHooks Reload GIF](http://g.recordit.co/CITvKXJOFe.gif =400x)
+![VimHooks Reload GIF](http://g.recordit.co/CITvKXJOFe.gif)
 
 ### Vim as REPL
 _Execute whatever code you're currently editing and see the result from
 stdout opened in a new window._
 
-![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif =400x400)
+![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif)
 
 Installation
 ============
@@ -75,24 +76,13 @@ then simply copy and paste:
     cd ~/.vim/bundle
     git clone https://github.com/ahw/vim-hooks.git
 
-Background: What is an autocommand?
-===================================
-> You can specify commands to be executed automatically when reading or
-> writing a file, when entering or leaving a buffer or window, and when
-> exiting Vim.  For example, you can create an autocommand to set the
-> 'cindent' option for files matching \*.c.  You can also use autocommands
-> to implement advanced features, such as editing compressed files (see
-> gzip-example).  The usual place to put autocommands is in your .vimrc or
-> .exrc file.
->
-> Source: `:help autocommands`
-
 How to name VimHook scripts
 ===========================
 The **vim-hooks** plugin relies on specific filename patterns in order to
 figure out which scripts to execute after a given `autocmd` event. I'll try to
-refer to these scripts consistently as "VimHook" scripts throughout. There are
-three flavors of VimHook scripts:
+refer to these scripts consistently as "VimHook" scripts throughout.
+Sometimes I just call them "hooks" for short. There are three flavors of
+VimHook scripts:
 
 1. VimHook scripts that are **global**, meaning they are executed every time the
    appropriate event is triggered in Vim, regardless of what file you're
@@ -128,7 +118,7 @@ literally._
 
 ![Global VimHooks Grammar](https://pd93f014.s3.amazonaws.com/global-vimhooks-grammar.svg)
 
-_Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F(%5Cd*)%5C.(%5BA-Za-z%5D%2B)%5C.%3F(.*)%5C.vimhook.*%24)_
+_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F(%5Cd*)%5C.(%5BA-Za-z%5D%2B)%5C.%3F(.*)%5C.vimhook.*%24)_
 
 The format of global VimHook filenames is `[.sortkey].eventname.vimhook[.*]`,
 where `sortkey` is optional and can be whatever integer you want and
@@ -143,7 +133,7 @@ multiple VimHook scripts with the same `eventname` they will be executed
 serially according to the lexographic ordering of their filenames.  Thus,
 you can choose your `sortkey`s strategically if you have several scripts
 which need to run in a specific order (for example,
-`000.bufwritepost.vimhook.sh`, `100.bufwritepost.vimhook.sh`).
+`.000.bufwritepost.vimhook.sh`, `.100.bufwritepost.vimhook.sh`).
 
 Extension-specific VimHooks
 ---------------------------
@@ -176,26 +166,27 @@ when the `BufEnter` event is fired from the `app.js` buffer.
 VimHook Options
 ===============
 As of release [1.4.0](https://github.com/ahw/vim-hooks/releases/tag/1.3.1),
-VimHook supports a handful of additional options that are set in the source
-code of the hook script itself. These options can enable extra
-functionality.
+VimHook supports additional functionality that is exposed by setting the
+relevant option flags in the source code of the hook script itself.
 
 ### How to set options
 During initialization, **vim-hooks** scans through the contents of each
-VimHook script and parses out these option values, and then applies them to
-that VimHook for the duration of the session. To set an option value in your
-VimHook script, add a line anywhere in the file that contains
-`vimhook.myOptionKey = myOptionValue`. The line can begin with anything you
-want (like a comment character) but should not have anything after the
-`myOptionValue` part. Whitespace around the `=` sign is irrelevant. You can
-use a `:` instead of an `=` sign if you prefer.
+VimHook script and parses out any option flags it finds, and then applies
+them to that VimHook for the duration of the session. To set an option
+flag/value in your VimHook script, add a line anywhere in the file that
+follows the convention `vimhook.myOptionKey = myOptionValue`. The line can
+begin with anything you want (like a comment character) but should not have
+anything after the `myOptionValue` part. Whitespace around the `=` sign is
+irrelevant. You can use a `:` instead of an `=` sign if you prefer.
 
-![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-options.svg)
-_Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.(%5B%5Cw%5C.%5D%2B)%5Cs*%5B%3A%3D%5D%3F%5Cs*(%5Cw*)%24)_
+![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-option-grammar-1.svg)
 
-The following lines are all equivalent ways of setting the option `myOption`
-to `true`. Notice that you are not forced to set an option value. If you
-only provide an option key, the value will be implicitly set to `true`.
+_The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.(%5B%5Cw%5C.%5D%2B)%5Cs*%5B%3A%3D%5D%3F%5Cs*(%5Cw*)%24)_
+
+For example, the following lines are all equivalent ways of setting the
+option `myOption` to `true`. Notice that you are not forced to set an option
+value. If you only provide an option key, the value will be automatically
+set to `true`.
 
 ```
 # vimhook.myOption = true
@@ -212,11 +203,11 @@ The following are all equivalent ways of setting the `myOption` key to
 # vimhook.myOption:0
 ```
 ### Available options
-- **vimhook.bufferoutput** Dump the stdout from this hook script into a new
-  scratch buffer, opened automatically in a new window. If the buffer
-  already exists, overwrite it and refresh the window.
-- **vimhook.bufferoutput.vsplit** Open the buffer output window in a
-  vertical split instead of the default horizontal.
+
+Option Key                  | Behavior
+---                         | ---
+vimhook.bufferoutput        | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently. (Default: false.)
+vimhook.bufferoutput.vsplit | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. (Default: false.)
 
 Commands
 ========
@@ -294,6 +285,7 @@ duration of your Vim session.*
 Which autocmd events are exposed by Vim Hooks?
 ==============================================
 Currently, **vim-hooks** responds to
+
 - `VimEnter`
 - `VimLeave`
 - `BufEnter`
@@ -328,11 +320,10 @@ number of editors which are able to "live preview" raw CSS changes or HTML
 changes, their capabilities almost always end there. How about when you need
 to minify and closure-compile your JavaScript? And compile and minify your
 Sass files? Maybe you need to copy them to another place in the filesystem.
-Maybe you're working off a remote server. Maybe &ndash; probably &ndash;
-you'd really like to see the results updated in more than just Chrome. If
-you can write the automation logic to do these things into a script,
-VimHooks will provide the mechanism for hooking that automation into any 
-Vim `autocmd` you wish.
+Maybe you're working off a remote server. And you'd really like to see the
+results updated in more than just Chrome. If you can write the automation
+logic to do these things into a script, VimHooks will provide the mechanism
+for hooking that automation into any Vim `autocmd` you wish.
 
 **Jump to Individual Examples**
 
@@ -552,3 +543,21 @@ Dump standard output of hook script into scratch buffer
 -------------------------------------------------------
 
 ![VimHooks Buffer SQL Output GIF](http://pd93f014.s3.amazonaws.com/test-out-4.gif)
+
+> **demo.sql**
+>
+> ```sql
+> SELECT * FROM some_table;
+> ```
+
+&nbsp;
+> **demo.sql.bufwritepost.vimhook.002.sh**
+>
+> ```sh
+> #!/bin/sh
+>
+> vimhook.bufferoutput
+> vimhook.bufferoutput.vsplit = false
+>
+> sqlite3 sms_database < $1
+> ```
