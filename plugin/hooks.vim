@@ -194,13 +194,13 @@ function! s:executeHookFiles(...)
 
     for eventname in a:000
         let eventname = tolower(eventname)
+        let originalBufferName = getreg('%')
         for vimHook in s:vimHooksByFilename[filename]
             if filename =~ vimHook.pattern && eventname ==? vimHook.event
                 if s:isAnExecutableFile(vimHook.path) && !vimHook.isIgnoreable && vimHook.isEnabled
                     echom "[vim-hooks] Executing hookfile " . vimHook.toString() . " after event " . vimHook.event
                     let splitCommand = vimHook.getOptionValue('bufferoutput.vsplit') ? 'vnew' : 'new'
                     if vimHook.getOptionValue('bufferoutput')
-                        let originalBufferName = getreg('%')
                         let outputBufferName = vimHook.baseName . ".output"
                         let winnr = bufwinnr('^' . outputBufferName . '$')
                         " If window doesn't exist, create a new one using
