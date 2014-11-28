@@ -106,7 +106,7 @@ function! s:findHookFiles()
                 let ext = get(hiddenFileMatches, 3, "")
 
                 if len(ext)
-                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*\.' . ext), 'extension')
+                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*\.' . ext . '$'), 'extension')
                 else
                     " If the empty string is passed, this will become a
                     " global hook, which is what we want.
