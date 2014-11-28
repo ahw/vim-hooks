@@ -118,11 +118,17 @@ execution later.
    
 Global VimHooks
 ---------------
+_A note on notation: Under each of these section headers I'm providing a
+quick cheat-sheet blob of the naming convention. For these blobs I'm using
+the UNIX-style convention of enclosing optional parts of a pattern in square
+brackets and representing "blobs" with `*`. The `.` should be taken
+literally._
+
 **`[.sortkey].eventname.vimhook[.*]`**
 
-_A note on notation: I'm using the UNIX-style convention of enclosing
-optional parts of a pattern in square brackets and representing "blobs" with
-`*`. The `.` should be taken literally._
+![Global VimHooks Grammar](https://pd93f014.s3.amazonaws.com/global-vimhooks-grammar.svg)
+
+_Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F(%5Cd*)%5C.(%5BA-Za-z%5D%2B)%5C.%3F(.*)%5C.vimhook.*%24)_
 
 The format of global VimHook filenames is `[.sortkey].eventname.vimhook[.*]`,
 where `sortkey` is optional and can be whatever integer you want and
@@ -143,6 +149,9 @@ Extension-specific VimHooks
 ---------------------------
 **`[.sortkey].eventname.ext.vimhook[.*]`**
 
+_The grammar for extension-specific VimHooks is the same for that of global
+VimHooks given above. Group 3 is where the extension is specified._
+
 The format of extension-specific VimHook filenames is
 `[.sortkey].eventname.ext.vimhook[.*]`, where `sortkey` is optional and can be
 whatever integer you want, `eventname` is any valid Vim `autocmd` event
@@ -162,7 +171,7 @@ react to and `eventname` is any valid Vim `autocmd` event
 with. For example, the VimHook named `README.md.bufwritepost.vimhook.py` will
 only be executed when the `BufWritePost` event is fired from the `README.md`
 buffer; the VimHook named `app.js.bufenter.vimhook.py`  will only be executed
-when the `BufEnter` evente is fired from the `app.js` buffer.
+when the `BufEnter` event is fired from the `app.js` buffer.
 
 VimHook Options
 ===============
