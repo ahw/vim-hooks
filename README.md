@@ -10,6 +10,9 @@ Vim Hooks
     - [Global VimHooks](#global-vimhooks)
     - [Extension-specific VimHooks](#extension-specific-vimhooks)
     - [File-specific VimHooks](#file-specific-vimhooks)
+- [VimHook Options](#vimhook-options)
+    - [How to set options](#how-to-set-options)
+    - [Available options](#available-options)
 - [Commands](#commands)
     - [ListVimHooks (useful!)](#listvimhooks)
     - [FindHookFiles](#findhookfiles)
@@ -173,6 +176,51 @@ only be executed when the `BufWritePost` event is fired from the `README.md`
 buffer; the VimHook named `app.js.bufenter.vimhook.py`  will only be executed
 when the `BufEnter` evente is fired from the `app.js` buffer.
 
+VimHook Options
+===============
+As of release [1.4.0](https://github.com/ahw/vim-hooks/releases/tag/1.3.1),
+VimHook supports a handful of additional options that are set in the source
+code of the hook script itself. These options can enable extra
+functionality.
+
+### How to set options
+During initialization, **vim-hooks** scans through the contents of each
+VimHook script and parses out these option values, and then applies them to
+that VimHook for the duration of the session. To set an option value in your
+VimHook script, add a line anywhere in the file that contains
+`vimhook.myOptionKey = myOptionValue`. The line can begin with anything you
+want (like a comment character) but should not have anything after the
+`myOptionValue` part. Whitespace around the `=` sign is irrelevant. You can
+use a `:` instead of an `=` sign if you prefer.
+
+![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-options.svg)
+_Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.(%5B%5Cw%5C.%5D%2B)%5Cs*%5B%3A%3D%5D%3F%5Cs*(%5Cw*)%24)_
+
+The following lines are all equivalent ways of setting the option `myOption`
+to `true`. Notice that you are not forced to set an option value. If you
+only provide an option key, the value will be implicitly set to `true`.
+
+```
+# vimhook.myOption = true
+# vimhook.myOption : true
+# vimhook.myOption:1
+# vimhook.myOption
+```
+
+The following are all equivalent ways of setting the `myOption` key to
+`false`.
+```
+# vimhook.myOption = false
+# vimhook.myOption : false
+# vimhook.myOption:0
+```
+### Available options
+- **vimhook.bufferoutput** Dump the stdout from this hook script into a new
+  scratch buffer, opened automatically in a new window. If the buffer
+  already exists, overwrite it and refresh the window.
+- **vimhook.bufferoutput.vsplit** Open the buffer output window in a
+  vertical split instead of the default horizontal.
+
 Commands
 ========
 ListVimHooks
@@ -288,6 +336,16 @@ you'd really like to see the results updated in more than just Chrome. If
 you can write the automation logic to do these things into a script,
 VimHooks will provide the mechanism for hooking that automation into any 
 Vim `autocmd` you wish.
+
+**Jump to Individual Examples**
+
+- [Recompile Sass files on save](#recompile-sass-files-on-save)
+- [Reload Chrome tabs after recompiling Sass files](#reload-chrome-tabs-after-recompiling-sass-files)
+- [Reload Chrome tabs after recompiling Sass files on remote machine](#reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
+- [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
+- [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
+- [Log editing events for future analytics](#log-editing-events-for-future-analytics)
+- [**New!** Dump standard output of hook script into scratch buffer](#dump-standard-output-of-hook-script-into-scratch-buffer)
 
 Recompile Sass files on save
 ----------------------------
@@ -493,3 +551,6 @@ bufleave for file app.js on Sun Jun 15 19:10:05 PDT 2014
 bufenter for file _colors.scss on Sun Jun 15 19:10:05 PDT 2014
 ```
 
+Dump standard output of hook script into scratch buffer
+-------------------------------------------------------
+This example makes use of the recently-implemented [VimHook options](#vimhook-options) functionality.

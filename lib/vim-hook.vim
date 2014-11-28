@@ -36,7 +36,7 @@ function! s:VimHook.New(path, event, pattern)
 
     let newVimHook.optional = {}
     let vimHookLines = readfile(newVimHook.path)
-    let optionDeclarationRegExp = '\vvimhook\.([0-9A-Za-z\.]+)\s*[:=]?\s*(\w*)$'
+    let optionDeclarationRegExp = '\vvimhook\.([A-Za-z0-9_\.]+)\s*[:=]?\s*(\w*)$'
     for line in vimHookLines
         if line =~ optionDeclarationRegExp
             " echom "> Found line \"" . line . "\""
