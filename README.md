@@ -3,7 +3,7 @@ Vim Hooks
 - [Introduction](#introduction)
 - [Demos](#demos)
     - [Sass Recompilation and Browser Reload](#sass-recompilation-and-browser-reload)
-    - [Buffer SQLite Output](#buffer-sqlite-output)
+    - [Vim as REPL](#vim-as-repl)
 - [Installation](#installation)
 - [Background: What is an autocmd?](#background-what-is-an-autocommand)
 - [How to name VimHook scripts](#how-to-name-vimhook-scripts)
@@ -58,13 +58,13 @@ created recently, which makes use of the new "buffer output" feature.
 _Recompile a Sass file and then reload Chrome, Firefox, and Safari using
 AppleScript_
 
-![VimHooks GIF](http://g.recordit.co/CITvKXJOFe.gif)
+![VimHooks Reload GIF](http://g.recordit.co/CITvKXJOFe.gif =400x)
 
-### Buffer SQL Query Output
+### Vim as REPL
 _Execute whatever code you're currently editing and see the result from
 stdout opened in a new window._
 
-![VimHooks Buffer Output GIF](http://pd93f014.s3.amazonaws.com/test-out-4.gif)
+![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif =400x400)
 
 Installation
 ============
@@ -550,4 +550,5 @@ bufenter for file _colors.scss on Sun Jun 15 19:10:05 PDT 2014
 
 Dump standard output of hook script into scratch buffer
 -------------------------------------------------------
-This example makes use of the recently-implemented [VimHook options](#vimhook-options) functionality.
+
+![VimHooks Buffer SQL Output GIF](http://pd93f014.s3.amazonaws.com/test-out-4.gif)
