@@ -67,14 +67,9 @@ stdout opened in a new window._
 
 ![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif)
 
-### Buffer SQLite Output
-In this example I am editing a SQL script which is executed against a
-SQLite 3 database. Because the VimHook script contains the
-`vimhook.bufferoutput` option key in a comment line, the plugin knows to
-take whatever is produced on stdout and dump it into a new scratch buffer.
-This buffer is opened in a horizontal split and subsequently refreshed after
-each new `BufWritePost` event. You can see I am changing some of the SQLite output
-format options and then editing parts of the query itself.
+### Buffer SQL Query Output
+_Execute whatever code you're currently editing and see the result from
+stdout opened in a new window._
 
 ![VimHooks Buffer Output GIF](http://pd93f014.s3.amazonaws.com/test-out-4.gif)
 
