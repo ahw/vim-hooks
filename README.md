@@ -67,11 +67,11 @@ stdout opened in a new window._
 
 ![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif)
 
-### Buffer SQL Query Output
+### Vim as REPL
 _Execute whatever code you're currently editing and see the result from
 stdout opened in a new window._
 
-![VimHooks Buffer Output GIF](http://pd93f014.s3.amazonaws.com/test-out-4.gif)
+![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif)
 
 Installation
 ============
@@ -229,41 +229,43 @@ functionality.
 
 ### How to set options
 During initialization, **vim-hooks** scans through the contents of each
-VimHook script and parses out these option values, and then applies them to
-that VimHook for the duration of the session. To set an option value in your
-VimHook script, add a line anywhere in the file that contains
-`vimhook.myOptionKey = myOptionValue`. The line can begin with anything you
-want (like a comment character) but should not have anything after the
-`myOptionValue` part. Whitespace around the `=` sign is irrelevant. You can
-use a `:` instead of an `=` sign if you prefer.
+VimHook script and parses out any option flags it finds, and then applies
+them to that hook script for the duration of the session. To set an option
+flag and value in your VimHook script, add a line anywhere in the file that
+follows the convention `vimhook.myOptionKey = myOptionValue`. The line can
+begin with anything you want (like a comment character) but should not have
+anything after the `myOptionValue` part. Whitespace around the `=` sign is
+irrelevant. You can use a `:` instead of an `=` sign if you prefer.
 
-![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-options.svg)
-_Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.(%5B%5Cw%5C.%5D%2B)%5Cs*%5B%3A%3D%5D%3F%5Cs*(%5Cw*)%24)_
+![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-option-grammar-1.svg)
 
-The following lines are all equivalent ways of setting the option `myOption`
-to `true`. Notice that you are not forced to set an option value. If you
-only provide an option key, the value will be implicitly set to `true`.
+_The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.(%5B%5Cw%5C.%5D%2B)%5Cs*%5B%3A%3D%5D%3F%5Cs*(%5Cw*)%24)_
+
+For example, the following lines are all equivalent ways of setting the
+option `myOption` to `true`. Notice (in the last line) that you are not
+forced to set an option value. If you only provide an option key, the value
+will be automatically set to `true`.
 
 ```
 # vimhook.myOption = true
-# vimhook.myOption : true
-# vimhook.myOption:1
-# vimhook.myOption
+// vimhook.myOption : true
+-- vimhook.myOption:1
+// foo bar baz vimhook.myOption
 ```
 
 The following are all equivalent ways of setting the `myOption` key to
 `false`.
 ```
 # vimhook.myOption = false
-# vimhook.myOption : false
-# vimhook.myOption:0
+>>> vimhook.myOption : false
+" vimhook.myOption:0
 ```
 ### Available options
-- **vimhook.bufferoutput** Dump the stdout from this hook script into a new
-  scratch buffer, opened automatically in a new window. If the buffer
-  already exists, overwrite it and refresh the window.
-- **vimhook.bufferoutput.vsplit** Open the buffer output window in a
-  vertical split instead of the default horizontal.
+
+Option Key                  | Behavior
+---                         | ---
+vimhook.bufferoutput        | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently. (Default: false.)
+vimhook.bufferoutput.vsplit | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. (Default: false.)
 
 Commands
 ========
@@ -416,7 +418,6 @@ races.
 - [Reload Chrome tabs after recompiling Sass files on remote machine](#reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
 - [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
 - [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-- [Log editing events for future analytics](#log-editing-events-for-future-analytics)
 - [**New!** Dump standard output of hook script into scratch buffer](#dump-standard-output-of-hook-script-into-scratch-buffer)
 
 Recompile Sass files on save
