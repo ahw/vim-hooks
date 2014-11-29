@@ -174,7 +174,7 @@ when the `BufEnter` event is fired from the `app.js` buffer.
 
 VimHook Options
 ===============
-As of release [1.4.0](https://github.com/ahw/vim-hooks/releases/tag/1.3.1),
+As of release [1.4.0](https://github.com/ahw/vim-hooks/releases/tag/1.4.0),
 VimHook supports additional functionality that is exposed by setting various
 VimHook _options_. The option flags are set _in the source code_ of the hook
 script itself (as opposed to a config file &mdash; I am trying to keep the
