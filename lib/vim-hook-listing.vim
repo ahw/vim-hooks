@@ -97,13 +97,18 @@ function! s:VimHookListing.deleteLine()
     let lnum = line('.')
     let index = self.getVimHookIndexByLineNum(lnum)
     let vimHook = self.vimHooksByListingIndex[index]
-    " Start ignoring this VimHook
+
+    " Start ignoring this VimHook. Note: should probably actually delete the
+    " VimHook instance in memory but this will serve the same purpose for
+    " now. However, this instance WILL now be inconsistent with what is on
+    " the filesystem for the duration of this session.
     call vimHook.ignore()
     execute "!rm -i " . vimHook.path
-    " call delete(vimHook.path)
+    " OLD: call delete(vimHook.path)
     delete " Delete the current line
-
-    " redraw!
+    " Update the internal index
+    call remove(self.vimHooksByListingIndex, index)
+    redraw!
     setlocal nomodifiable
 endfunction
 
