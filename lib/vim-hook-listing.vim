@@ -92,6 +92,21 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
     return text
 endfunction
 
+function! s:VimHookListing.deleteLine()
+    setlocal modifiable
+    let lnum = line('.')
+    let index = self.getVimHookIndexByLineNum(lnum)
+    let vimHook = self.vimHooksByListingIndex[index]
+    " Start ignoring this VimHook
+    call vimHook.ignore()
+    execute "!rm -i " . vimHook.path
+    " call delete(vimHook.path)
+    delete " Delete the current line
+
+    " redraw!
+    setlocal nomodifiable
+endfunction
+
 " FUNCTION: VimHookListing.toggledLine()
 " Toggles the isEnabled flag of the VimHook corresponding to the current
 " cursor line. This function also changes the actual buffer contents of the

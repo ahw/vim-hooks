@@ -304,12 +304,14 @@ aug END
 aug VimHookListingGroup
     au!
     au FileType hooks nnoremap <silent> <buffer> x :call g:VimHookListing.toggleLine()<cr>
-    " au FileType hooks nnoremap <silent> <buffer> q :call g:VimHookListing.exitBuffer()<cr>
-    " au FileType hooks nnoremap <silent> <buffer> <esc> :call g:VimHookListing.exitBuffer()<cr>
     au FileType hooks nnoremap <silent> <buffer> i :call g:VimHookListing.openLineInHorizontalSplit()<cr>
     au FileType hooks nnoremap <silent> <buffer> s :call g:VimHookListing.openLineInVerticalSplit()<cr>
     au FileType hooks nnoremap <silent> <buffer> o :call g:VimHookListing.openLineInPreviousWindow()<cr>
+    au FileType hooks nnoremap <silent> <buffer> d :call g:VimHookListing.deleteLine()<cr>
     au FileType hooks nnoremap <silent> <buffer> <cr> :call g:VimHookListing.openLineInPreviousWindow()<cr>
+    " These existed in early version of the plugin
+    " au FileType hooks nnoremap <silent> <buffer> q :call g:VimHookListing.exitBuffer()<cr>
+    " au FileType hooks nnoremap <silent> <buffer> <esc> :call g:VimHookListing.exitBuffer()<cr>
 aug END
 
 " Immediately run the s:findHookFiles function.
