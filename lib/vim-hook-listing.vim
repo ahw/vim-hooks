@@ -52,6 +52,7 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
     let text = 'Mappings'
     let text = s:joinWithNewline(text, '--------')
     let text = s:joinWithNewline(text, 'x     : enable/disable a VimHook')
+    let text = s:joinWithNewline(text, 'd     : delete a VimHook (runs rm -i so you will be prompted to confirm)')
     let text = s:joinWithNewline(text, 'i     : open VimHook script in split')
     let text = s:joinWithNewline(text, 's     : open VimHook script in vertical split')
     let text = s:joinWithNewline(text, 'o     : open VimHook script in prev window')
