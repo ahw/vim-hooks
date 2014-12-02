@@ -285,6 +285,8 @@ endfunction
 aug VimHookGroup
     "Clear the augroup. Otherwise Vim will combine them.
     au!
+    au BufAdd * call s:executeHookFiles('BufAdd')
+    au BufNew * call s:executeHookFiles('BufNew')
     au VimEnter * call s:executeHookFiles('VimEnter')
     au VimLeave * call s:executeHookFiles('VimLeave')
     au BufEnter * call s:executeHookFiles('BufEnter')
@@ -293,6 +295,7 @@ aug VimHookGroup
     au BufUnload * call s:executeHookFiles('BufUnload')
     au BufWinLeave * call s:executeHookFiles('BufWinLeave')
     au BufWritePost * call s:executeHookFiles('BufWritePost')
+    au BufReadPost * call s:executeHookFiles('BufReadPost')
     " au CursorHold * call s:executeHookFiles('CursorHold')
     " au CursorMoved * call s:executeHookFiles('CursorMoved')
 aug END
