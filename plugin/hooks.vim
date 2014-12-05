@@ -150,6 +150,11 @@ function! s:compareVimHooks(first, second)
         return 1
 endfunction
 
+function! s:printErrorMessage(msg)
+    echohl WarningMsg
+    echo a:msg
+    echohl None
+endfunction
 
 " Accepts a variable number of event names and executes the hook files
 " corresponding to each. This will typically be called with a single
@@ -160,6 +165,8 @@ endfunction
 " a:2 => second extra arg
 " a:000 => all the extra args in a List
 function! s:executeHookFiles(...)
+    let errorMessages = ""
+
     if !s:shouldExecuteHooks()
         " Return early if hooks have been manually disabled via :StopExecutingHooks
         return
@@ -221,6 +228,7 @@ function! s:executeHookFiles(...)
                         call feedkeys('lh')
                     else
                         execute '!' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
+                        let errorMessages = (v:shell_error == 0) ? errorMessages : errorMessages . "[vim-hooks] Script " . vimHook.baseName . " exited with error code " . v:shell_error . "\n"
                         redraw!
                     endif
                 elseif !vimHook.isIgnoreable && vimHook.isEnabled
@@ -244,6 +252,12 @@ function! s:executeHookFiles(...)
             endif
         endfor
     endfor
+
+    if len(errorMessages)
+        " Chop off the last newline character in the error messages
+        let errorMessages = strpart(errorMessages, 0, len(errorMessages)-1)
+        call s:printErrorMessage(errorMessages)
+    endif
 endfunction
 
 function! s:listVimHooks()
