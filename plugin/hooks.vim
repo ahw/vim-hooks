@@ -295,6 +295,24 @@ function! s:openVimHookListingBuffer(...)
     "call g:VimHookListing.handleKeys()
 endfunction
 
+function! s:createBlankVimHook(eventname, ...)
+    " Get the base filename (strip leading path part)
+    let filename = get(matchlist(getreg("%"), '\v[^/]+$'), 0, "")
+    let newHookName = filename . "." . tolower(a:eventname) . ".vimhook.sh"
+    let splitCommand = "vsp"
+
+    " Default the pattern to the filename
+    let pattern = filename
+    if a:0 == 1 && type(a:1) == type("")
+        " If number of extra args is 1 and the first extra arg is a Number
+        let pattern = a:1
+    endif
+
+    execute 'botright ' . splitCommand . ' ' . newHookName
+    " Manually add this hook file
+    call s:addHookFile(g:VimHook.New(newHookName, a:eventname, '\v^' . pattern . '$'), 'filename')
+endfunction
+
 "Create an autocmd group
 aug VimHookGroup
     "Clear the augroup. Otherwise Vim will combine them.
@@ -343,3 +361,5 @@ command! -nargs=0 StopExecutingHooks call <SID>stopExecutingHooks()
 command! -nargs=0 StartExecutingHooks call <SID>startExecutingHooks()
 " Pretty-print a list of all the vimhook dictionaries for debugging
 command! -nargs=0 ListVimHooks call <SID>listVimHooks()
+
+command! -nargs=+ -complete=event CreateNewVimHook call <SID>createBlankVimHook(<f-args>)
