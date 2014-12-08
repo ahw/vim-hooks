@@ -123,7 +123,8 @@ literally._
 
 ![Global VimHooks Grammar](https://pd93f014.s3.amazonaws.com/global-vimhooks-grammar.svg)
 
-_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F(%5Cd*)%5C.(%5BA-Za-z%5D%2B)%5C.%3F(.*)%5C.vimhook.*%24)_
+_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F%28%5Cd%2A%29%5C.%28%5BA-Za-z%5D%2B%29%5C.%3F%28.%2A%29%5C.vimhook.%2A%24)_
+![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
 
 The format of global VimHook filenames is `[.sortkey].eventname.vimhook[.*]`,
 where `sortkey` is optional and can be whatever integer you want and
@@ -160,7 +161,8 @@ File-specific VimHooks
 
 ![File-specific VimHooks Grammar](https://s3.amazonaws.com/pd93f014/filename-specific-vimhook-grammar.svg)
 
-_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E(.%2B)%5C.(%5BA-Za-z%5D%2B)%5C.vimhook)_
+_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%28.%2B%29%5C.%28%5BA-Za-z%5D%2B%29%5C.vimhook)_
+![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
 
 The format of file-specific VimHook filenames is
 `filename.eventname.vimhook[.*]`, where `filename` is the full name you want to
@@ -192,7 +194,8 @@ irrelevant. You can use a `:` instead of an `=` sign if you prefer.
 
 ![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-option-grammar-1.svg)
 
-_The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.(%5B%5Cw%5C.%5D%2B)%5Cs*%5B%3A%3D%5D%3F%5Cs*(%5Cw*)%24)_
+_The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.%28%5B%5Cw%5C.%5D%2B%29%5Cs%2A%5B%3A%3D%5D%3F%5Cs%2A%28%5Cw%2A%29%2524)_
+![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
 
 For example, the following lines are all equivalent ways of setting the
 option `myOption` to `true`. Notice (in the last line) that you are not
