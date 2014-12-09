@@ -105,10 +105,13 @@ function! s:VimHookListing.deleteLine()
     " the filesystem for the duration of this session.
     call vimHook.ignore()
     execute "!rm -i " . vimHook.path
-    " OLD: call delete(vimHook.path)
-    delete " Delete the current line
-    " Update the internal index
-    call remove(self.vimHooksByListingIndex, index)
+    if !filereadable(vimHook.path)
+        " If the user typed "yes" and thus actually deleted the file,
+        " remove this line from the listing. Otherwise, leave as-is.
+        delete " Delete the current line
+        " Update the internal index
+        call remove(self.vimHooksByListingIndex, index)
+    endif
     redraw!
     setlocal nomodifiable
 endfunction
