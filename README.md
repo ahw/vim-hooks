@@ -67,12 +67,6 @@ stdout opened in a new window._
 
 ![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif)
 
-### Vim as REPL
-_Execute whatever code you're currently editing and see the result from
-stdout opened in a new window._
-
-![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif)
-
 Installation
 ============
 If you don't have a preferred installation method, I recommend
@@ -111,19 +105,19 @@ only supports synchronous execution of the `*.vimhook` scripts, but I hope
 to implement asynchronous execution later.
 
    
-Global VimHooks
----------------
 _A note on notation: Under each of these section headers I'm providing a
 quick cheat-sheet blob of the naming convention. For these blobs I'm using
 the UNIX-style convention of enclosing optional parts of a pattern in square
 brackets and representing "blobs" with `*`. The `.` should be taken
 literally._
 
+Global VimHooks
+---------------
 **`[.sortkey].eventname.vimhook[.*]`**
 
-![Global VimHooks Grammar](https://pd93f014.s3.amazonaws.com/global-vimhooks-grammar.svg)
+![Global VimHooks Grammar](https://pd93f014.s3.amazonaws.com/global-vimhooks-grammar-1.svg)
 
-_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F%28%5Cd%2A%29%5C.%28%5BA-Za-z%5D%2B%29%5C.%3F%28.%2A%29%5C.vimhook.%2A%24)_
+_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F%28%5Cd%2A%29%5C.%28%5BA-Za-z%5D%2B%29%5C.vimhook.%2A%24)_
 ![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
 
 The format of global VimHook filenames is `[.sortkey].eventname.vimhook[.*]`,
@@ -145,15 +139,17 @@ Extension-specific VimHooks
 ---------------------------
 **`[.sortkey].eventname.ext.vimhook[.*]`**
 
-_The grammar for extension-specific VimHooks is the same for that of global
-VimHooks given above. Group 3 is where the extension is specified._
+![Extension-specific VimHooks Grammar](https://pd93f014.s3.amazonaws.com/extension-vimhooks-grammar.svg)
+
+_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F%28%5Cd%2A%29%5C.%28%5BA-Za-z%5D%2B%29%5C.%3F%28.%2A%29%5C.vimhook.%2A%24)_
+![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
 
 The format of extension-specific VimHook filenames is
 `[.sortkey].eventname.ext.vimhook[.*]`, where `sortkey` is optional and can be
 whatever integer you want, `eventname` is any valid Vim `autocmd` event
-(case-insensitive), and `ext` is whatever filename extension you want to
-react to. For example, `.bufwritepost.scss.vimhook.py` will only be executed
-when the `BufWritePost` event is fired on `*.scss` files.
+(case-insensitive), and `ext` is whatever filename extension you want to react
+to. For example, `.bufwritepost.scss.vimhook.py` will only be executed when the
+`BufWritePost` event is fired on `*.scss` files.
 
 File-specific VimHooks
 ----------------------
@@ -353,6 +349,8 @@ Which autocmd events are exposed by Vim Hooks?
 ==============================================
 Currently, **vim-hooks** responds to
 
+- `BufAdd`
+- `BufNew`
 - `VimEnter`
 - `VimLeave`
 - `BufEnter`
@@ -360,8 +358,8 @@ Currently, **vim-hooks** responds to
 - `BufDelete`
 - `BufUnload`
 - `BufWinLeave`
+- `BufReadPost`
 - `BufWritePost`
-- `CursorHold`
 
 Adding others is not difficult, but I thought there could be a negative
 performance impact if **vim-hooks** was setting up listeners for _every_ Vim
@@ -387,8 +385,6 @@ number of editors which are able to "live preview" raw CSS changes or HTML
 changes, their capabilities almost always end there. How about when you need
 to minify and closure-compile your JavaScript? And compile and minify your
 Sass files? Maybe you need to copy them to another place in the filesystem.
-Maybe you're working off a remote server. And you'd really like to see the
-results updated in more than just Chrome.
 
 Recently I've also added the ability to use Vim as a sort of REPL by passing
 in the `vimhook.bufferoutput` option flag in the source of any VimHook
@@ -396,23 +392,9 @@ script. With that option flag set, VimHooks will dump the stdout from the hook
 script into its own Vim buffer which opens automatically in a new window.
 When the hook script is run again, that buffer is automatically
 refreshed. Now you can start writing code and see the results immediately
-without leaving Vim. I find it insanely useful when writing SQL queries or
-when I only half remember the API of some library I'm using and want to
-guess before looking it up.
-
-The point is, if you can script automation logic to do these things,
-VimHooks will provide the mechanism for hooking that automation into any Vim
-`autocmd` you wish, and once you have that, you're off to the
-races.
-
-**Jump to Individual Examples**
-
-- [Recompile Sass files on save](#recompile-sass-files-on-save)
-- [Reload Chrome tabs after recompiling Sass files](#reload-chrome-tabs-after-recompiling-sass-files)
-- [Reload Chrome tabs after recompiling Sass files on remote machine](#reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
-- [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-- [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-- [**New!** Dump standard output of hook script into scratch buffer](#dump-standard-output-of-hook-script-into-scratch-buffer)
+without leaving Vim. I find it insanely useful in particular when trying to
+hammer out some new code and can only half remember the API of some library
+I'm using.
 
 **Jump to Individual Examples**
 
