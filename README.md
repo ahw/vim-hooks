@@ -172,7 +172,7 @@ when the `BufEnter` event is fired from the `app.js` buffer.
 
 VimHook Options
 ===============
-As of release [1.4.0](https://github.com/ahw/vim-hooks/releases/tag/1.4.0),
+As of release [1.4.1](https://github.com/ahw/vim-hooks/releases/tag/1.4.1),
 VimHook supports additional functionality that is exposed by setting various
 VimHook _options_. The option flags are set _in the source code_ of the hook
 script itself (as opposed to a config file &mdash; I am trying to keep the
@@ -192,53 +192,6 @@ irrelevant. You can use a `:` instead of an `=` sign if you prefer.
 
 _The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.%28%5B%5Cw%5C.%5D%2B%29%5Cs%2A%5B%3A%3D%5D%3F%5Cs%2A%28%5Cw%2A%29%2524)_
 ![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
-
-For example, the following lines are all equivalent ways of setting the
-option `myOption` to `true`. Notice (in the last line) that you are not
-forced to set an option value. If you only provide an option key, the value
-will be automatically set to `true`.
-
-```
-# vimhook.myOption = true
-// vimhook.myOption : true
--- vimhook.myOption:1
-// foo bar baz vimhook.myOption
-```
-
-The following are all equivalent ways of setting the `myOption` key to
-`false`.
-```
-# vimhook.myOption = false
->>> vimhook.myOption : false
-" vimhook.myOption:0
-```
-### Available options
-
-Option Key                  | Behavior
----                         | ---
-vimhook.bufferoutput        | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently. (Default: false.)
-vimhook.bufferoutput.vsplit | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. (Default: false.)
-
-VimHook Options
-===============
-As of release [1.4.0](https://github.com/ahw/vim-hooks/releases/tag/1.3.1),
-VimHook supports a handful of additional options that are set in the source
-code of the hook script itself. These options can enable extra
-functionality.
-
-### How to set options
-During initialization, **vim-hooks** scans through the contents of each
-VimHook script and parses out any option flags it finds, and then applies
-them to that hook script for the duration of the session. To set an option
-flag and value in your VimHook script, add a line anywhere in the file that
-follows the convention `vimhook.myOptionKey = myOptionValue`. The line can
-begin with anything you want (like a comment character) but should not have
-anything after the `myOptionValue` part. Whitespace around the `=` sign is
-irrelevant. You can use a `:` instead of an `=` sign if you prefer.
-
-![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-option-grammar-1.svg)
-
-_The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.(%5B%5Cw%5C.%5D%2B)%5Cs*%5B%3A%3D%5D%3F%5Cs*(%5Cw*)%24)_
 
 For example, the following lines are all equivalent ways of setting the
 option `myOption` to `true`. Notice (in the last line) that you are not
