@@ -16,6 +16,7 @@ function! s:VimHook.New(path, event, pattern)
     " which may or may not exist.
     let newVimHook.id = substitute(newVimHook.path, '\v.disabled$', "", "")
     let newVimHook.baseName = get(matchlist(newVimHook.path, '\v[^/]+$'), 0, "")
+    let newVimHook.outputBufferName = substitute(newVimHook.baseName, '\v.disabled$', "", "") . ".output"
 
     let newVimHook.isEnabled = 1
     if newVimHook.path =~ '\v\.disabled$'

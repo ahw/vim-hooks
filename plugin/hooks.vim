@@ -208,13 +208,12 @@ function! s:executeHookFiles(...)
                     echom "[vim-hooks] Executing hookfile " . vimHook.toString() . " after event " . vimHook.event
                     let splitCommand = vimHook.getOptionValue('bufferoutput.vsplit') ? 'vnew' : 'new'
                     if vimHook.getOptionValue('bufferoutput')
-                        let outputBufferName = vimHook.baseName . ".output"
-                        let winnr = bufwinnr('^' . outputBufferName . '$')
+                        let winnr = bufwinnr('^' . vimHook.outputBufferName . '$')
                         " If window doesn't exist, create a new one using
                         " botright. If it does exist, just go to that
                         " window number using :[n] wincmd w, which would
                         " go to window n.
-                        execute winnr < 0 ? 'botright ' . splitCommand . ' ' . outputBufferName : winnr . 'wincmd w'
+                        execute winnr < 0 ? 'botright ' . splitCommand . ' ' . vimHook.outputBufferName : winnr . 'wincmd w'
                         setlocal buftype=nowrite
                         setlocal bufhidden=wipe
                         setlocal nobuflisted
