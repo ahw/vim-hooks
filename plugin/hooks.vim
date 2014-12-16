@@ -204,50 +204,7 @@ function! s:executeHookFiles(...)
         let originalBufferName = getreg('%')
         for vimHook in s:vimHooksByFilename[filename]
             if eventname ==? vimHook.event
-                if s:isAnExecutableFile(vimHook.path) && !vimHook.isIgnoreable && vimHook.isEnabled
-                    echom "[vim-hooks] Executing hookfile " . vimHook.toString() . " after event " . vimHook.event
-                    let splitCommand = vimHook.getOptionValue('bufferoutput.vsplit') ? 'vnew' : 'new'
-                    if vimHook.getOptionValue('bufferoutput')
-                        let winnr = bufwinnr('^' . vimHook.outputBufferName . '$')
-                        " If window doesn't exist, create a new one using
-                        " botright. If it does exist, just go to that
-                        " window number using :[n] wincmd w, which would
-                        " go to window n.
-                        execute winnr < 0 ? 'botright ' . splitCommand . ' ' . vimHook.outputBufferName : winnr . 'wincmd w'
-                        setlocal buftype=nowrite
-                        setlocal bufhidden=wipe
-                        setlocal nobuflisted
-                        setlocal noswapfile
-                        setlocal nowrap
-                        setlocal number
-                        " setlocal filetype=html (for example)
-
-                        execute 'silent %!'. vimHook.path . ' ' . shellescape(originalBufferName) . ' ' . shellescape(vimHook.event)
-                        " Press some keys to get rid of the Press ENTER prompt
-                        call feedkeys('lh')
-                    else
-                        execute '!' . vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(vimHook.event)
-                        let errorMessages = (v:shell_error == 0) ? errorMessages : errorMessages . "[vim-hooks] Script " . vimHook.baseName . " exited with error code " . v:shell_error . "\n"
-                        redraw!
-                    endif
-                elseif !vimHook.isIgnoreable && vimHook.isEnabled
-                    " Assert: hookfile is not executable, but also not
-                    " ignoreable. Prompt user to set executable bit or to
-                    " start ignoring.
-                    echohl WarningMsg
-                    echo "[vim-hooks] Could not execute script " . vimHook.path . " because it does not have \"execute\" permissions.\nSet executable bit (chmod u+x) [yn]? "
-                    let key = nr2char(getchar())
-                    if key ==# 'y'
-                        echom "Running chmod u+x " . vimHook.path
-                        execute "!chmod u+x " . vimHook.path
-                    elseif key ==# 'n'
-                        call vimHook.ignore()
-                    endif
-                    echohl None
-                else
-                    " Assert: we must be ignoring this file or it is permanently
-                    " disabled. Do nothing.
-                endif
+                let errorMessages = errorMessages . s:executeVimHook(vimHook, originalBufferName)
             endif
         endfor
     endfor
@@ -257,6 +214,60 @@ function! s:executeHookFiles(...)
         let errorMessages = strpart(errorMessages, 0, len(errorMessages)-1)
         call s:printErrorMessage(errorMessages)
     endif
+endfunction
+
+function! s:executeVimHook(vimHook, originalBufferName)
+    let errorMessages = ""
+    if s:isAnExecutableFile(a:vimHook.path) && !a:vimHook.isIgnoreable && a:vimHook.isEnabled
+        echom "[vim-hooks] Executing hookfile " . a:vimHook.toString() . " after event " . a:vimHook.event
+        let splitCommand = a:vimHook.getOptionValue('bufferoutput.vsplit') ? 'vnew' : 'new'
+        if a:vimHook.getOptionValue('bufferoutput')
+            let winnr = bufwinnr('^' . a:vimHook.outputBufferName . '$')
+            " If window doesn't exist, create a new one using
+            " botright. If it does exist, just go to that
+            " window number using :[n] wincmd w, which would
+            " go to window n.
+            execute winnr < 0 ? 'botright ' . splitCommand . ' ' . a:vimHook.outputBufferName : winnr . 'wincmd w'
+            setlocal buftype=nowrite
+            setlocal bufhidden=wipe
+            setlocal nobuflisted
+            setlocal noswapfile
+            setlocal nowrap
+            setlocal number
+            " setlocal filetype=html (for example)
+
+            " TODO: Redrawing the screen seems to be silently squashing
+            " the error messages that would appear if we had the line below.
+            " execute 'silent %!'. a:vimHook.path . ' ' . shellescape(originalBufferName) . ' ' . shellescape(a:vimHook.event)
+            execute 'silent %!'. a:vimHook.path . ' ' . shellescape(a:originalBufferName) . ' ' . shellescape(a:vimHook.event)
+            " Press some keys to get rid of the Press ENTER prompt
+            call feedkeys('lh')
+        else
+            execute '!' . a:vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:vimHook.event)
+            let errorMessages = (v:shell_error == 0) ? errorMessages : errorMessages . "[vim-hooks] Script " . a:vimHook.baseName . " exited with error code " . v:shell_error . "\n"
+            redraw!
+        endif
+    elseif !a:vimHook.isIgnoreable && a:vimHook.isEnabled
+        " Assert: hookfile is not executable, but also not
+        " ignoreable. Prompt user to set executable bit or to
+        " start ignoring.
+        echohl WarningMsg
+        echo "[vim-hooks] Could not execute script " . a:vimHook.path . " because it does not have \"execute\" permissions.\nSet executable bit (chmod u+x) [yn]? "
+        let key = nr2char(getchar())
+        if key ==# 'y'
+            echom "Running chmod u+x " . a:vimHook.path
+            execute "!chmod u+x " . a:vimHook.path
+        elseif key ==# 'n'
+            call a:vimHook.ignore()
+        endif
+        echohl None
+        " Now call this function again. Hopefully we don't mess up the logic
+        " here or it will loop infinitely.
+        call s:executeVimHook(a:vimHook, a:originalBufferName)
+    else
+        " Assert: we're ignoring this file.
+    endif
+    return errorMessages
 endfunction
 
 function! s:listVimHooks()
