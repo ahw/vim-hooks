@@ -180,6 +180,15 @@ function! s:VimHookListing.openLineInPreviousWindow()
     call self._tryToOpenInPreviousWindow()
 endfunction
 
+function! s:VimHookListing.openLineInCurrentWindow()
+    let lnum = line('.')
+    if self.isCheckboxLine(lnum)
+        let index = self.getVimHookIndexByLineNum(lnum)
+        let hookFilePath = self.vimHooksByListingIndex[index].path
+        execute "e" . " " . hookFilePath
+    endif
+endfunction
+
 " FUNCTION: VimHookListing.exitBuffer()
 " A wrapper around a :q! command.
 function! s:VimHookListing.exitBuffer()
