@@ -280,6 +280,7 @@ function! s:openVimHookListingBuffer(...)
     setlocal noswapfile
     setlocal nobuflisted
     setlocal nospell
+    setlocal modifiable
     set nowrap
     setfiletype hooks
 
