@@ -1,5 +1,4 @@
-![VimHooks Logo](https://pd93f014.s3.amazonaws.com/vim-hooks.svg)
-===
+![VimHooks](https://pd93f014.s3.amazonaws.com/vim-hooks.svg?v=1)
 
 - [Introduction](#introduction)
 - [Demos](#demos)
