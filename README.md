@@ -1,5 +1,6 @@
-Vim Hooks
-=========
+![VimHooks Logo](https://pd93f014.s3.amazonaws.com/vim-hooks.svg)
+===
+
 - [Introduction](#introduction)
 - [Demos](#demos)
     - [Sass Recompilation and Browser Reload](#sass-recompilation-and-browser-reload)
