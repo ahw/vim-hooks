@@ -42,13 +42,6 @@ function! s:VimHook.New(path, event, pattern)
         call newVimHook.scrapeForOptions()
     endif
 
-    " Debugging
-    if exists("g:vimhooks_debug_mode") && g:vimhooks_debug_mode
-        for key in keys(newVimHook.optional)
-            " echom "The key is <" . key . "> and the value is <" . newVimHook.optional[key] . ">"
-        endfor
-    endif
-
     return newVimHook
 endfunction
 
