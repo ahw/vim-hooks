@@ -35,7 +35,6 @@ function! s:VimHook.New(path, event, pattern)
     let newVimHook.pattern = a:pattern
     let newVimHook.isIgnoreable = 0
 
-    let newVimHook.optional = {}
     if (filereadable(newVimHook.path))
         " The scrapeForOptions function goes through each line in the file
         " and tries to parse out option values.
@@ -66,7 +65,7 @@ function! VimHook.scrapeForOptions()
                 " Input       | Result
                 " -----       | ------
                 " vimhook.foo | self.optional.foo = 1
-                let self.optional[key] = 1
+                call self.setOptionValue(key, 1)
             else
                 " If a value was provided, try to convert things that look
                 " like booleans to Vim-suitable to true/false values. If
@@ -78,7 +77,7 @@ function! VimHook.scrapeForOptions()
                 " vimhook.foo = true | self.optional.foo = 1
                 " vimhook.bar = 1    | self.optional.bar = 1
                 " vimhook.baz = hi   | self.optional.baz = "hi"
-                let self.optional[key] = s:parseOptionValue(value)
+                call self.setOptionValue(key, value)
             endif
         endif
     endfor
@@ -88,15 +87,20 @@ function! s:parseOptionValue(value)
     " Return 1 if the value matches the string 'true' case insensitive or
     " '1'. Return 0 if the value matches the string 'false case insensitive
     " or '0'. Else, just echo back the string value itself.
-    if a:value =~? "true"
-        return 1
-    elseif a:value =~? "1"
-        return 1
-    elseif a:value =~? "false"
-        return 0
-    elseif a:value =~? "0"
-        return 0
+    if type(a:value) == type("")
+        if a:value =~? "true"
+            return 1
+        elseif a:value =~? "1"
+            return 1
+        elseif a:value =~? "false"
+            return 0
+        elseif a:value =~? "0"
+            return 0
+        else
+            return a:value
+        endif
     else
+        " Assert: value is probably just a Number
         return a:value
     endif
 endfunction
@@ -109,7 +113,19 @@ function! s:VimHook.toggleIsEnabled()
     endif
 endfunction
 
+function! s:VimHook.setOptionValue(key, value)
+    if !exists('self.optional')
+        let self.optional = {}
+    endif
+
+    let self.optional[a:key] = s:parseOptionValue(a:value)
+endfunction
+
 function! s:VimHook.getOptionValue(key)
+    if !exists('self.optional')
+        let self.optional = {}
+    endif
+
     if has_key(self.optional, a:key)
         return self.optional[a:key]
     else
