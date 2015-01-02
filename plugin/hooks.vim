@@ -1,5 +1,6 @@
 runtime lib/vim-hook.vim
 runtime lib/vim-hook-listing.vim
+runtime lib/vim-hook-options.vim
 
 let s:allVimHooks = []
 let s:nextGlobalHookIndex = 0
@@ -220,8 +221,8 @@ function! s:executeVimHook(vimHook, originalBufferName)
     let errorMessages = ""
     if s:isAnExecutableFile(a:vimHook.path) && !a:vimHook.isIgnoreable && a:vimHook.isEnabled
         echom "[vim-hooks] Executing hookfile " . a:vimHook.toString() . " after event " . a:vimHook.event
-        let splitCommand = a:vimHook.getOptionValue('bufferoutput.vsplit') ? 'vnew' : 'new'
-        if a:vimHook.getOptionValue('bufferoutput')
+        let splitCommand = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_VSPLIT.keyName) ? 'vnew' : 'new'
+        if a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT.keyName)
             let winnr = bufwinnr('^' . a:vimHook.outputBufferName . '$')
             " If window doesn't exist, create a new one using
             " botright. If it does exist, just go to that

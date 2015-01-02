@@ -35,6 +35,17 @@ function! s:VimHook.New(path, event, pattern)
     let newVimHook.pattern = a:pattern
     let newVimHook.isIgnoreable = 0
 
+    " First set any options that were set via global variables
+    for key in keys(g:VimHookOptions)
+        let keyName = g:VimHookOptions[key].keyName
+        let globalVariableName = g:VimHookOptions[key].globalVariableName
+
+        if exists(globalVariableName)
+            call newVimHook.setOptionValue(keyName, eval(globalVariableName))
+        endif
+    endfor
+
+    " Now scrape for options
     if (filereadable(newVimHook.path))
         " The scrapeForOptions function goes through each line in the file
         " and tries to parse out option values.
