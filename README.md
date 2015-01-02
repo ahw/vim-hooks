@@ -12,6 +12,7 @@
 - [**New!** VimHook Options](#vimhook-options)
     - [How to set options](#how-to-set-options)
     - [Available options](#available-options)
+    - [Set options globally](#set-options-globally)
 - [Commands](#commands)
     - [ListVimHooks (useful!)](#listvimhooks)
     - [FindHookFiles](#findhookfiles)
@@ -218,6 +219,27 @@ Option Key                  | Behavior
 ---                         | ---
 vimhook.bufferoutput        | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently. (Default: false.)
 vimhook.bufferoutput.vsplit | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. (Default: false.)
+
+### Set options globally
+
+All of the options listed above can be overridden on a global level in your
+`~/.vimrc` file. Each option key has a corresponding global variable name
+that **vim-hooks** will check for and use if it exists. Global option
+settings are applied first and overridden on a per-hook basis wherever they
+are used. For example, if your `~/.vimrc` contains
+
+```vim
+let g:vimhooks_bufferoutput_vsplit = 1
+```
+
+then buffer output windows will always open in a vertical split unless there
+is a `vimhook.bufferoutput.vsplit = 0` option setting in some particular hook
+script.
+
+Option Key                  | Global variable name used for overriding
+---                         | ---
+vimhook.bufferoutput        | g:vimhooks\_bufferoutput
+vimhook.bufferoutput.vsplit | g:vimhooks\_bufferoutput\_vsplit
 
 Commands
 ========
