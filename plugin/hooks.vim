@@ -58,18 +58,26 @@ function! s:clearHookFiles()
     let s:nextFilenameHookIndex = 0
 endfunction
 
-function! s:addHookFile(vimHook, scope)
+function! s:addHookFile(vimHook, ...)
     call g:VimHookListing.updateColumnWidths(a:vimHook)
-    if a:scope == 'global'
+
+    let scope = ""
+    if a:0 >= 1 && type(a:1) == type("")
+        " If number of extra args is >= 1 and the first extra arg is a
+        " String
+        let scope = a:1
+    endif
+
+    if scope == 'global'
         call insert(s:allVimHooks, a:vimHook, s:nextGlobalHookIndex)
         let s:nextGlobalHookIndex += 1
         let s:nextExtensionHookIndex += 1
         let s:nextFilenameHookIndex += 1
-    elseif  a:scope == 'extension'
+    elseif  scope == 'extension'
         call insert(s:allVimHooks, a:vimHook, s:nextExtensionHookIndex)
         let s:nextExtensionHookIndex += 1
         let s:nextFilenameHookIndex += 1
-    elseif a:scope == 'filename'
+    elseif scope == 'filename'
         call insert(s:allVimHooks, a:vimHook, s:nextFilenameHookIndex)
         let s:nextFilenameHookIndex += 1
     else
