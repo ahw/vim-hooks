@@ -94,52 +94,21 @@ function! s:findHookFiles()
     let files = split(glob("*") . "\n" . glob(".*") . "\n" . glob("~/.vimhooks/*") . "\n" . glob("~/.vimhooks/.*"), "\n")
     for hookfile in files
         let baseName = get(matchlist(hookfile, '\v[^/]+$'), 0, "")
-        " Matches filenames that have the ".vimhook" string anywhere inside
+        " Matches filenames that have the "vimhook" string anywhere inside
         " them, except for those that match the "ignoreable" regex (i.e.,
-        " *.swp files). Uses a very-magic regex. See :help magic.
-        if baseName =~ '\v\.vimhook' && !s:isIgnoreable(baseName)
-            if baseName =~ '\v^\.'
-                " Hidden file case. Examples:
-                "   .bufwritepost.vimhook
-                "   .123.bufwritepost.vimhook.sh
-                "   .bufwritepost.scss.vimhook.sh
-                "
-                " This regex matches
-                " [.sortkey].eventname[.ext].vimhook[.trailing.chars].  This
-                " match will put the entire hookfile in the 0th position,
-                " "sortkey" in the 1st position, "eventname" in the 2nd
-                " position, and "ext" in the 3rd position.
-                let hiddenFileMatches =  matchlist(baseName, '\v^\.?(\d*)\.(\a+)\.?(.*)\.vimhook')
+        " *.swp files).
+        if baseName =~ 'vimhook' && !s:isIgnoreable(baseName)
 
-                let eventname = get(hiddenFileMatches, 2, "")
-                let ext = get(hiddenFileMatches, 3, "")
+            " This regex matches .[sortkey.][suffix.][eventname].vimhook,
+            " where the leading ".", "sortkey.", and "suffix." are all
+            " optional. After matching we will strip off the trailing "."
+            " from sortkey and suffix.
+            let matches = matchlist(baseName, '\v^\.?(\d+\.)?(.+\.)?(\w+)\.vimhook')
+            let sortkey = substitute(get(matches, 1, ""), '\v\.$', '', '') " Remove trailing .
+            let suffix = substitute(get(matches, 2, ""), '\v\.$', '', '') " Remove trailing .
+            let eventname = get(matches, 3, "")
+            call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*' . suffix . '$'))
 
-                if len(ext)
-                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*\.' . ext . '$'), 'extension')
-                else
-                    " If the empty string is passed, this will become a
-                    " global hook, which is what we want.
-                    call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v.*'), 'global')
-                endif
-            else
-                " Normal (i.e., not hidden) file case. Intended for when
-                " user wants to only react to events associated with a
-                " single file.
-                "   styles.scss.bufwritepost.vimhook
-                "   app.coffee.bufwritepost.vimhook
-                "   index.html.bufwritepost.vimhook
-                "
-                " This regex matches
-                " [filename.ext].eventname.vimhook[.trailing.chars]. The
-                " match will put the entire hookfile in the 0th position,
-                " the desired filename to react to in the 1st position, and
-                " the eventname in the 2nd position.
-                let singleFileMatches = matchlist(baseName, '\v^(.+)\.(\a+)\.vimhook')
-                let filename = get(singleFileMatches, 1, "")
-                let eventname = get(singleFileMatches, 2, "")
-
-                call s:addHookFile(g:VimHook.New(hookfile, eventname, '\v^' . filename . '$'), 'filename')
-            endif
         endif
     endfor
 endfunction
