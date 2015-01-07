@@ -5,10 +5,9 @@
     - [Sass Recompilation and Browser Reload](#sass-recompilation-and-browser-reload)
     - [**New!** Vim as REPL](#vim-as-repl)
 - [Installation](#installation)
-- [How to name VimHook scripts](#how-to-name-vimhook-scripts)
-    - [Global VimHooks](#global-vimhooks)
-    - [Extension-specific VimHooks](#extension-specific-vimhooks)
-    - [File-specific VimHooks](#file-specific-vimhooks)
+- [How it works](#how-it-works)
+    - [**New!** VimHook naming pattern](#vimhook-naming-pattern)
+    - [Arguments provided to a hook script](#arguments-provided-to-a-hook-script)
 - [**New!** VimHook Options](#vimhook-options)
     - [How to set options](#how-to-set-options)
     - [Available options](#available-options)
@@ -31,24 +30,35 @@
 
 Introduction
 ============
-This is a Vim plugin that looks for specially-named scripts in your current
-working directory (as well as `~/.vimhooks/`) that have names like
+This is a Vim plugin that lets you automatically execute arbitrary shell
+scripts after specific `autocmd` events are fired while editing certain files.
+It does this by looking for specially-named scripts  in your current working
+directory (as well as `~/.vimhooks/`) that have names like
 `.bufwritepost.vimhook.rb` or `.cursorhold.vimhook.sh` and executes those
-scripts whenever &ndash; in this example &ndash; Vim fires the
-`BufWritePost` and `CursorHold` `autocmd` events, respectively. I wrote this
-plugin specifically to ease the write-save-switch-reload pain of web
-development, and my most salient use case so far is the ability to
-auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`)
-in Vim (see obnoxious flashing gif below), though I have a feeling there are
-a lot of other interesting use cases out there (recently I've added the
-ability to use Vim as a sort of REPL). If you've ever wanted an easy way of
-hooking arbitrary shell scripts into Vim events, this is for you.
+scripts whenever &ndash; in this example &ndash; Vim fires the `BufWritePost`
+and `CursorHold` `autocmd` events, respectively.
+
+VimHook scripts, which I refer to as "hook scripts," or just "hooks" throughout
+this document, can live at the project level or at a global level in
+`~/.vimhooks/`. They can be disabled by appending ".disabled" to the filename.
+Finally, although I'm getting a little ahead of myself here, the
+`:ListVimHooks` command provides a listing of all enabled and disabled hook
+scripts available in a particular session and from there, each hook can easily be
+toggled on and off interactively.
+
+I wrote this plugin specifically to ease the write-save-switch-reload pain of
+web development, and although my most salient use case so far is the ability to
+auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`) in
+Vim (see obnoxious flashing gif below), I have a feeling there are a lot of
+other interesting use cases out there. Recently I've added the ability to use
+Vim as a sort of REPL. If you've ever wanted an easy way of hooking arbitrary
+shell scripts into Vim events, this plugin is for you.
 
 In the next sections I'll describe how to install the **vim-hooks** plugin,
 give a bit of background on `autocommands` and events in Vim, and then explain
 in detail how to use **vim-hooks**, what additional options are available,
 and what commands the plugin exposes. If you are not familiar with
-`autocommand`s in Vim, try `:help autocommand` for an overview.
+`autocommand`s in Vim, run `:help autocommand` for an overview.
 
 Demos
 =====
@@ -77,99 +87,41 @@ then simply copy and paste:
     cd ~/.vim/bundle
     git clone https://github.com/ahw/vim-hooks.git
 
-How to name VimHook scripts
-===========================
-The **vim-hooks** plugin relies on specific filename patterns in order to
-figure out which scripts to execute after a given `autocmd` event. I'll try to
-refer to these scripts consistently as "VimHook" scripts throughout.
-Sometimes I just call them "hooks" for short. There are three flavors of
-VimHook scripts:
+How it works
+============
+When some event **E** is fired from a Vim buffer named **F** (i.e., the
+filename), VimHooks looks through the list of all hook scripts in the current
+working directory and `~/.vimhooks/`, and executes those hooks whose **event**
+property is **E** and whose **matching suffix** matches **F**.
+These and other properties are embedded in the hook script filename itself and
+follow a specific naming pattern so that the plugin can parse them out. This pattern
+is described in the next section.
+<!-- The **matching suffix** matches **F** when **F** ends in **matching suffix**.-->
 
-1. VimHook scripts that are **global**, meaning they are executed every time the
-   appropriate event is triggered in Vim, regardless of what file you're
-   editing.
-2. VimHook scripts that are **extension-specific**, meaning they are executed
-   every time the appropriate event is triggered in Vim _and_ the filename
-   of the current buffer has an extension corresponding to that which is
-   specified in the VimHook filename. For example, you could create a VimHook
-   script which is executed only when `*.js` files are changed.
-3. VimHook scripts that are **file-specific**. These are executed only when the
-   appropriate event is fired in Vim _and_ the filename of the current
-   buffer is exactly that which is specified in the VimHook filename. For
-   example, you could create a VimHook script which is executed only when
-   `some-special-file.html` changes.
+VimHook naming pattern
+----------------------
+![VimHook Naming Structure](https://s3.amazonaws.com/pd93f014/vimhook-naming-diagram.svg?v=4)
 
+Property                       | Description
+---                            | ---
+**leading dot** (optional)     | Doesn't matter whether the file is hidden or not.
+**sort key** (optional)        | There can be multiple VimHooks set to trigger on the same `autocmd` event, and they are executed in lexicographical order. If it is important that certain hooks execute in a specific order, you can add one or more digits in this space to ensure the ordering is correct.
+**matching suffix** (optional) | Assuming the **event** property has matched, a VimHook will trigger for all files ending with this matching suffix. If **matching suffix** is "js", the hook wil trigger for all files ending in "js". When matching suffix is "main.js" the hook will trigger for all files ending in "main.js" (including "main.js" itself). If there is no matching suffix the hook becomes global: it will trigger for all files. The matching suffix can contain dots.
+**event**                      | The name of the `autocmd` event the hook is triggered on. Case insensitive.
+**"vimhook"**                  | Identifies this as a VimHook script. Nothing after "vimhook" is parsed out by the plugin.
+
+Note that in general, each component of the pattern is separated by a "." from
+the other components, though the **matching suffix** can itself contains dots
+and VimHooks knows how to accommodate these. When you leave off one of the
+optional pattern components (e.g., **sort key**) you do not need to include the
+dot marking its place.
+
+Arguments provided to a hook script
+-----------------------------------
 Each script is passed the name of the current buffer and the triggered event
 name as command-line arguments. So in a Bash shell script you could, for
-example, use `$1` and `$2` to access these values. Currently this plugin
-only supports synchronous execution of the `*.vimhook` scripts, but I hope
-to implement asynchronous execution later.
-
-   
-_A note on notation: Under each of these section headers I'm providing a
-quick cheat-sheet blob of the naming convention. For these blobs I'm using
-the UNIX-style convention of enclosing optional parts of a pattern in square
-brackets and representing "blobs" with `*`. The `.` should be taken
-literally._
-
-Global VimHooks
----------------
-**`[.sortkey].eventname.vimhook[.*]`**
-
-![Global VimHooks Grammar](https://pd93f014.s3.amazonaws.com/global-vimhooks-grammar-1.svg)
-
-_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F%28%5Cd%2A%29%5C.%28%5BA-Za-z%5D%2B%29%5C.vimhook.%2A%24)_
-![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
-
-The format of global VimHook filenames is `[.sortkey].eventname.vimhook[.*]`,
-where `sortkey` is optional and can be whatever integer you want and
-`eventname` is any valid Vim `autocmd` event (case-insensitive). You are
-free to add any arbitrary stuff to the end of the filename, though I think
-it looks clean if you simply add the normal extension corresponding to the
-language your script is in and leave it at that.
-
-If you would like to have multiple global scripts reacting to the same
-`eventname` simply name the files using a different `sortkey` for each. When
-there are multiple VimHook scripts with the same `eventname` they will be
-executed serially according to the lexicoographic ordering of their filenames.
-Thus, you can choose your `sortkey`s strategically if you have several
-scripts which need to run in a specific order (for example,
-`.000.bufwritepost.vimhook.sh`, `.100.bufwritepost.vimhook.sh`).
-
-Extension-specific VimHooks
----------------------------
-**`[.sortkey].eventname.ext.vimhook[.*]`**
-
-![Extension-specific VimHooks Grammar](https://pd93f014.s3.amazonaws.com/extension-vimhooks-grammar.svg)
-
-_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%5C.%3F%28%5Cd%2A%29%5C.%28%5BA-Za-z%5D%2B%29%5C.%3F%28.%2A%29%5C.vimhook.%2A%24)_
-![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
-
-The format of extension-specific VimHook filenames is
-`[.sortkey].eventname.ext.vimhook[.*]`, where `sortkey` is optional and can be
-whatever integer you want, `eventname` is any valid Vim `autocmd` event
-(case-insensitive), and `ext` is whatever filename extension you want to react
-to. For example, `.bufwritepost.scss.vimhook.py` will only be executed when the
-`BufWritePost` event is fired on `*.scss` files.
-
-File-specific VimHooks
-----------------------
-**`filename.eventname.vimhook[.*]`**
-
-![File-specific VimHooks Grammar](https://s3.amazonaws.com/pd93f014/filename-specific-vimhook-grammar.svg)
-
-_The actual grammar. Source: [www.regexper.com](http://www.regexper.com/#%5E%28.%2B%29%5C.%28%5BA-Za-z%5D%2B%29%5C.vimhook)_
-![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
-
-The format of file-specific VimHook filenames is
-`filename.eventname.vimhook[.*]`, where `filename` is the full name you want to
-react to and `eventname` is any valid Vim `autocmd` event
-(case-insensitive). In other words, you simply need to append
-`eventname.vimhook[.*]` to whatever file you want the hook to be associated
-with. For example, the VimHook named `README.md.bufwritepost.vimhook.py` will
-only be executed when the `BufWritePost` event is fired from the `README.md`
-buffer; the VimHook named `app.js.bufenter.vimhook.py`  will only be executed
-when the `BufEnter` event is fired from the `app.js` buffer.
+example, use `$1` and `$2` to access these values. The plugin only supports
+synchronous execution of VimHook scripts.
 
 VimHook Options
 ===============
@@ -224,9 +176,15 @@ vimhook.bufferoutput.vsplit | When true, open the buffer output window in a vert
 
 All of the options listed above can be overridden on a global level in your
 `~/.vimrc` file. Each option key has a corresponding global variable name
-that **vim-hooks** will check for and use if it exists. Global option
-settings are applied first and overridden on a per-hook basis wherever they
-are used. For example, if your `~/.vimrc` contains
+that **vim-hooks** will check for and use if it exists. These are documented in the table below.
+
+Option Key                  | Global variable name used for overriding
+---                         | ---
+vimhook.bufferoutput        | g:vimhooks\_bufferoutput
+vimhook.bufferoutput.vsplit | g:vimhooks\_bufferoutput\_vsplit
+
+Global option settings are applied first and overridden on a per-hook basis
+wherever they are used. For example, if your `~/.vimrc` contains
 
 ```vim
 let g:vimhooks_bufferoutput_vsplit = 1
@@ -235,11 +193,6 @@ let g:vimhooks_bufferoutput_vsplit = 1
 then buffer output windows will always open in a vertical split unless there
 is a `vimhook.bufferoutput.vsplit = 0` option setting in some particular hook
 script.
-
-Option Key                  | Global variable name used for overriding
----                         | ---
-vimhook.bufferoutput        | g:vimhooks\_bufferoutput
-vimhook.bufferoutput.vsplit | g:vimhooks\_bufferoutput\_vsplit
 
 Commands
 ========
@@ -256,11 +209,11 @@ as well as open them in a new window. Below is a screenshot of the
 Note there are two sections in this buffer: the **Mappings** section which shows
 a "cheat sheet" of the buffer-local mappings and the **Hooks** section which, for
 each VimHook script, shows a checkbox indicating enabled/disabled state of the
-script, the matching pattern associated with that script (where `*` represents a
-UNIX-style blob), the event associated
-with that script, and the path to the script. The `x` mapping is
-particularly useful as it allows you to quickly toggle on and off individual
-VimHook scripts as you move between projects that require different hooks.
+script, the matching pattern associated with that script (where `*` represents
+a UNIX-style blob), the event associated with that script, and the path to the
+script. The `x` mapping is particularly useful as it allows you to quickly
+toggle on and off individual VimHook scripts as you move between projects that
+require different hooks.
 
 ![ListVimHooks GIF](http://g.recordit.co/o3mon5FhWu.gif)
 
@@ -350,26 +303,25 @@ already in place for `BufWritePost`, `CursorHold`, and the other events listed
 above (you'll find them easily by grepping the code). You can also raise an issue
 or pull request.
 
-Example usage
+Example Usage
 =============
 As mentioned previously, this plugin was motivated by the pain of the
 save-switch-reload cycle between editor and browser that eats up so much time
 in web development. The examples that follow show off how quickly you can
 exploit this plugin to speed up that iteration time. While I have found a
 number of editors which are able to "live preview" raw CSS changes or HTML
-changes, their capabilities almost always end there. How about when you need
-to minify and closure-compile your JavaScript? And compile and minify your
-Sass files? Maybe you need to copy them to another place in the filesystem.
+changes, their capabilities almost always end there. How about when you need to
+minify and closure-compile your JavaScript? And compile and minify your Sass
+files? Maybe you need to copy them to another place in the filesystem.
 
-Recently I've also added the ability to use Vim as a sort of REPL by passing
-in the `vimhook.bufferoutput` option flag in the source of any VimHook
-script. With that option flag set, VimHooks will dump the stdout from the hook
-script into its own Vim buffer which opens automatically in a new window.
-When the hook script is run again, that buffer is automatically
-refreshed. Now you can start writing code and see the results immediately
-without leaving Vim. I find it insanely useful in particular when trying to
-hammer out some new code and can only half remember the API of some library
-I'm using.
+Recently I've also added the ability to use Vim as a sort of REPL by passing in
+the `vimhook.bufferoutput` option flag in the source of any VimHook script.
+With that option flag set, VimHooks will dump the stdout from the hook script
+into its own Vim buffer which opens automatically in a new window.  When the
+hook script is run again, that buffer is automatically refreshed. Now you can
+start writing code and see the results immediately without leaving Vim. I find
+it insanely useful in particular when trying to hammer out some new code and
+can only half remember the API of some library I'm using.
 
 **Jump to Individual Examples**
 
