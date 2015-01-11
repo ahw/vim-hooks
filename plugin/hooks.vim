@@ -173,7 +173,7 @@ endfunction
 function! s:executeVimHook(vimHook, originalBufferName)
     let errorMessages = ""
     if s:isAnExecutableFile(a:vimHook.path) && !a:vimHook.isIgnoreable && a:vimHook.isEnabled
-        echom "[vim-hooks] Executing hookfile " . a:vimHook.toString() . " after event " . a:vimHook.event
+        echom "[vim-hooks] Executing hookfile " . a:vimHook.baseName . " after event " . a:vimHook.event
         let splitCommand = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_VSPLIT.keyName) ? 'vnew' : 'new'
         if a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT.keyName)
             let winnr = bufwinnr('^' . a:vimHook.outputBufferName . '$')
