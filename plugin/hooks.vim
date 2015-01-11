@@ -60,31 +60,7 @@ endfunction
 
 function! s:addHookFile(vimHook, ...)
     call g:VimHookListing.updateColumnWidths(a:vimHook)
-
-    let scope = ""
-    if a:0 >= 1 && type(a:1) == type("")
-        " If number of extra args is >= 1 and the first extra arg is a
-        " String
-        let scope = a:1
-    endif
-
-    if scope == 'global'
-        call insert(s:allVimHooks, a:vimHook, s:nextGlobalHookIndex)
-        let s:nextGlobalHookIndex += 1
-        let s:nextExtensionHookIndex += 1
-        let s:nextFilenameHookIndex += 1
-    elseif  scope == 'extension'
-        call insert(s:allVimHooks, a:vimHook, s:nextExtensionHookIndex)
-        let s:nextExtensionHookIndex += 1
-        let s:nextFilenameHookIndex += 1
-    elseif scope == 'filename'
-        call insert(s:allVimHooks, a:vimHook, s:nextFilenameHookIndex)
-        let s:nextFilenameHookIndex += 1
-    else
-        " Um, just put it at the end
-        call insert(s:allVimHooks, a:vimHook, s:nextFilenameHookIndex)
-        let s:nextFilenameHookIndex += 1
-    endif
+    call sort(add(s:allVimHooks, a:vimHook), "s:compareVimHooks")
 endfunction
 
 function! s:findHookFiles()
