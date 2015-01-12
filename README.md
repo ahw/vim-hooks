@@ -13,7 +13,7 @@
     - [Available options](#available-options)
     - [Set options globally](#set-options-globally)
 - [Commands](#commands)
-    - [ListVimHooks (useful!)](#listvimhooks)
+    - [ListVimHooks](#listvimhooks)
     - [FindHookFiles](#findhookfiles)
     - [ExecuteHookFiles](#executehookfiles)
     - [StopExecutingHooks](#stopexecutinghooks)
@@ -199,9 +199,14 @@ Commands
 ListVimHooks
 ------------
 The `:ListVimHooks` command takes zero arguments. It opens a new
-unmodifiable buffer in a horizontal split which lists all of the VimHook script
-files the plugin has found after scanning the current working directory as
-well as the `~/.vimhooks/` directory. The buffer has a few buffer-only key
+unmodifiable buffer in a horizontal split which lists all of the VimHook
+script files the plugin has found after scanning the current working
+directory as well as the `~/.vimhooks/` directory. The enabled hook scripts
+are listed before the disabled ones. Helpfully, within each of these
+groupings, the relative order of the hook scripts matches their order of
+execution.
+
+The buffer has a few buffer-only key
 mappings that allow you to interactively disable and re-enable VimHook scripts
 as well as open them in a new window. Below is a screenshot of the
 `:ListVimHooks` buffer demonstrating this functionality.
