@@ -21,12 +21,6 @@
 - [Permissions](#permissions)
 - [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
 - [Example usage](#example-usage)
-    - [Recompile Sass files on save](#recompile-sass-files-on-save)
-    - [Reload Chrome tabs after recompiling Sass files](#reload-chrome-tabs-after-recompiling-sass-files)
-    - [Reload Chrome tabs after recompiling Sass files on remote machine](#reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
-    - [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-    - [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-    - [**New!** Dump standard output of hook script into scratch buffer](#dump-standard-output-of-hook-script-into-scratch-buffer)
 
 Introduction
 ============
@@ -310,14 +304,14 @@ or pull request.
 
 Example Usage
 =============
-As mentioned previously, this plugin was motivated by the pain of the
-save-switch-reload cycle between editor and browser that eats up so much time
-in web development. The examples that follow show off how quickly you can
-exploit this plugin to speed up that iteration time. While I have found a
-number of editors which are able to "live preview" raw CSS changes or HTML
-changes, their capabilities almost always end there. How about when you need to
-minify and closure-compile your JavaScript? And compile and minify your Sass
-files? Maybe you need to copy them to another place in the filesystem.
+This plugin was motivated by the pain of the save-switch-reload cycle
+between editor and browser that eats up so much time in web development. The
+examples that follow show off how quickly you can exploit this plugin to
+speed up that iteration time. While I have found a number of editors which
+are able to "live preview" raw CSS changes or HTML changes, their
+capabilities almost always end there. How about when you need to minify and
+closure-compile your JavaScript? And compile and minify your Sass
+files?
 
 Recently I've also added the ability to use Vim as a sort of REPL by passing in
 the `vimhook.bufferoutput` option flag in the source of any VimHook script.
@@ -328,188 +322,10 @@ start writing code and see the results immediately without leaving Vim. I find
 it insanely useful in particular when trying to hammer out some new code and
 can only half remember the API of some library I'm using.
 
-**Jump to Individual Examples**
-
-- [Recompile Sass files on save](#recompile-sass-files-on-save)
-- [Reload Chrome tabs after recompiling Sass files](#reload-chrome-tabs-after-recompiling-sass-files)
-- [Reload Chrome tabs after recompiling Sass files on remote machine](#reload-chrome-tabs-after-recompiling-sass-files-on-a-remote-machine)
-- [Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-- [Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine](#reload-chrome-tabs-and-the-active-safari-tab-and-the-active-firefox-tab-in-mac-osx-after-recompiling-sass-files-on-remote-machine)
-- [**New!** Dump standard output of hook script into scratch buffer](#dump-standard-output-of-hook-script-into-scratch-buffer)
-
-Recompile Sass files on save
-----------------------------
-Here is a two-line shell script, `.234.bufwritepost.vimhook.sh` which calls
-the `sass` compiler after each `BufWritePost` event on `*.scss` files.
-Remember that the ".234" part of the VimHook script can be number you want,
-or left off entirely.
-
-> **.234.bufwritepost.scss.vimhook.sh**
->
-> ```sh
-> #!/bin/sh
-> sass style.scss style.css
-> ```
-
-Reload Chrome tabs after recompiling Sass files
------------------------------------------------
-Install the [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
-Chrome extension. It requires some manual fiddling to get it up and running,
-but once you do, any `GET /reload HTTP/1.1` requests to `localhost:7700` will
-trigger a reload of whatever tabs you've selected with the extension. If you
-want a solution that doesn't involve installing a Chrome extension but only
-works on Mac OSX, see the examples using AppleScript further on down.
-
-> **.bufwritepost.scss.vimhook.sh**
->
-> ```sh
-> #!/bin/sh
->
-> sass style.scss style.css
->
-> # In a nutshell, the Chrome extension mentioned above listens for these
-> # requests and reloads the appropriate tabs when they occur.
-> curl "localhost:7700/reload"
-> ```
-
-Reload Chrome tabs after recompiling Sass files on a remote machine
--------------------------------------------------------------------
-This leverages a powerful feature of SSH called **port forwarding**, which
-allows you to forward data from your remote machine back to your client
-machine, through an SSH tunnel. Here we will set things up such that
-requests made to port 7700 on the remote machine are forwarded to port 7700
-on the client machine. Remember that this is the port
-[chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh) is listening
-on to know when to reload your selected tabs in the browser.
-
-The first part of the setup is the same as before:
-> Install the [chrome-stay-fresh](https://github.com/ahw/chrome-stay-fresh)
-> Chrome extension.  It requires some manual fiddling to get it up and running,
-> but once you do, any `GET /reload HTTP/1.1` requests to `localhost:7700` will
-> trigger a reload of whatever tabs you've selected with the extension.
-
-Now, `ssh` into the remote host with remote port forwarding configured as
-follows:
-
-```sh
-ssh your-remote-host -R 7700:localhost:7700 # forwards requests on 7700 to your client's 7700
-```
-
-Create this `bufwritepost.vimhook.sh` file which will recompile `style.scss`
-and then, via SSH port forwarding, make an HTTP request to
-your **client** machine listening on port 7700 to reload Chrome tabs.
-
-> **.bufwritepost.vimhook.sh** (on **your-remote-host**)
->
-> ```sh
-> #!/bin/sh
->
-> sass style.scss style.css
->
-> curl "localhost:7700/reload"
-> ```
-
-Reload Chrome tabs and the active Safari tab in Mac OSX after recompiling Sass files on remote machine
-------------------------------------------------------------------------------------------------------
-This makes use of the above port-forwarding along with a piece of slightly
-hacky Applescript to reload the active tab in Safari.
-
-> **.bufwritepost.vimhook.sh** (on the **remote-host**)
->
-> ```sh
-> #!/bin/sh
->
-> sass style.scss style.css
->
-> # Note: assumes you have mac-laptop set up in your ~/.ssh/config file.
-> # Obviously it helps if you have password-less access configured with SSH
-> # certificates.
-> curl "localhost:7700/reload"
-> ssh mac-laptop 'osascript ~/refresh_safari.applescript'
-> ```
- 
-&nbsp;
-> **refresh_safari.applescript** (on the **mac-laptop** host)
-> ```applescript
-> tell application "Safari"
->     set sameURL to URL of current tab of front window
->     set URL of current tab of front window to sameURL
-> end tell
-> ```
-> Source: [thelowlypeon, refresh_safari.applescript](https://github.com/thelowlypeon/refresh-safari/blob/master/refresh_safari.applescript)
-
-Reload Chrome tabs and the active Safari tab and the active Firefox tab in Mac OSX after recompiling Sass files on remote machine
----------------------------------------------------------------------------------------------------------------------------------
-One file save, three browser reloads. Great stuff. It's a little hacky in that
-assumes you only want to refresh a single tab in each browser and that this tab
-is your current active tab in each browser. In this example I am using the
-same piece of Applescript functionality to reload each browser tab.
-
-> **.bufwritepost.vimhook.sh** on the **remote-host** host
->
-> ```sh
-> #!/bin/sh
->
-> sass style.scss style.css
->
-> # Note: assumes you have mac-laptop set up in your ~/.ssh/config file.
-> # Obviously it helps if you have password-less access configured with SSH
-> # certificates.
-> ssh mac-laptop 'osascript ~/refresh_all_browsers.applescript'
-> ```
-
-&nbsp;
-> **refresh_all_browsers.applescript**
->
-> ```applescript
-> tell application "Safari"
->     activate
->     tell application "System Events" to keystroke "r" using command down
-> end tell
-> 
-> tell application "Chrome"
->     activate
->     tell application "System Events" to keystroke "r" using command down
-> end tell
-> 
-> tell application "Firefox"
->     activate
->     tell application "System Events" to keystroke "r" using command down
-> end tell
-> ```
-
-Dump standard output of hook script into scratch buffer
--------------------------------------------------------
-
-![VimHooks Buffer SQL Output GIF](http://pd93f014.s3.amazonaws.com/test-out-4.gif)
-
-> **demo.sql**
->
-> ```sql
-> .mode column
-> .width 5 19 50
-> .headers ON
-> 
-> SELECT
->     handle.ROWID,
->     datetime(message.date + 978307200, 'unixepoch', 'localtime') AS 'time',
->     message.text
-> FROM message JOIN handle ON (message.handle_id = handle.ROWID)
-> WHERE
->     time > DATE('2011-08-01')
-> ORDER BY message.date ASC LIMIT 30;
-> 
-> .exit
-> ```
-
-&nbsp;
-> **demo.sql.bufwritepost.vimhook.002.sh**
->
-> ```sh
-> #!/bin/sh
->
-> vimhook.bufferoutput
-> vimhook.bufferoutput.vsplit = false
->
-> sqlite3 sms_database < $1
-> ```
+**Links to Example Scripts**
+- [Restart your Jekyll preview server on file write](https://github.com/ahw/vim-hooks/blob/master/examples/090.bufwritepost.vimhook.restart-jekyll-server.sh)
+- [Reload Chrome tabs on file write](https://github.com/ahw/vim-hooks/blob/master/examples/100.bufwritepost.vimhook.chrome-reloader.sh)
+- [Reload Chrome, Firefox, and Safari on file write](https://github.com/ahw/vim-hooks/blob/master/examples/bufwritepost.vimhook.reload-browsers.applescript)
+- [Recompile Sass files on file write](https://github.com/ahw/vim-hooks/blob/master/examples/scss.bufwritepost.vimhook.recompile-sass.sh)
+- [Execute SQL via sqlite3 on file write](https://github.com/ahw/vim-hooks/blob/master/examples/sql.bufwritepost.vimhook.sh)
+- [Dump stdout from a hook into a scratch buffer](https://github.com/ahw/vim-hooks/blob/master/examples/test.js.bufwritepost.vimhook.buffer-output.sh)
