@@ -99,13 +99,13 @@ function! s:parseOptionValue(value)
     " '1'. Return 0 if the value matches the string 'false case insensitive
     " or '0'. Else, just echo back the string value itself.
     if type(a:value) == type("")
-        if a:value =~? "true"
+        if a:value ==? "true"
             return 1
-        elseif a:value =~? "1"
+        elseif a:value ==? "1"
             return 1
-        elseif a:value =~? "false"
+        elseif a:value ==? "false"
             return 0
-        elseif a:value =~? "0"
+        elseif a:value ==? "0"
             return 0
         else
             return a:value
