@@ -188,11 +188,12 @@ function! s:executeVimHook(vimHook, originalBufferName)
             setlocal noswapfile
             setlocal nowrap
             setlocal number
-            " setlocal filetype=html (for example)
 
-            " TODO: Redrawing the screen seems to be silently squashing
-            " the error messages that would appear if we had the line below.
-            " execute 'silent %!'. a:vimHook.path . ' ' . shellescape(originalBufferName) . ' ' . shellescape(a:vimHook.event)
+            let bufferFiletype = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_FILETYPE.keyName)
+            if len(bufferFiletype)
+                execute 'setlocal filetype=' . bufferFiletype
+            endif
+
             execute 'silent %!'. a:vimHook.path . ' ' . shellescape(a:originalBufferName) . ' ' . shellescape(a:vimHook.event)
             " Press some keys to get rid of the Press ENTER prompt
             call feedkeys('lh')
@@ -218,6 +219,7 @@ function! s:executeVimHook(vimHook, originalBufferName)
             call a:vimHook.ignore()
         endif
         echohl None
+
         " Now call this function again. Hopefully we don't mess up the logic
         " here or it will loop infinitely.
         call s:executeVimHook(a:vimHook, a:originalBufferName)
