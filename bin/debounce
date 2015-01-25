@@ -40,9 +40,9 @@ if [ $NOW == $LAST_DEBOUNCE ]; then
     # Invoke the hook as a normal executable, possibly prepending ./ to the
     # front if it is in the current working directory.
     if [[ $HOOK == /* ]]; then
-        $HOOK
+        $HOOK $3 $4
     else
-        ./$HOOK
+        ./$HOOK $3 $4
     fi
 else
     echo "[`date`] Got superceded by another debounced call at $LAST_DEBOUNCE" >> $LOG_FILE
