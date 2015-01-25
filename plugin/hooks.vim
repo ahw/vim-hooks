@@ -1,6 +1,7 @@
 runtime lib/vim-hook.vim
 runtime lib/vim-hook-listing.vim
 runtime lib/vim-hook-options.vim
+let s:plugindir = expand('<sfile>:p:h:h')
 
 let s:allVimHooks = []
 let s:nextGlobalHookIndex = 0
@@ -174,8 +175,11 @@ function! s:executeVimHook(vimHook, originalBufferName)
     let errorMessages = ""
     if s:isAnExecutableFile(a:vimHook.path) && !a:vimHook.isIgnoreable && a:vimHook.isEnabled
         echom "[vim-hooks] Executing hookfile " . a:vimHook.baseName . " after event " . a:vimHook.event
-        let splitCommand = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_VSPLIT.keyName) ? 'vnew' : 'new'
+
         if a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT.keyName)
+            " Buffer output case. Dump stdout into a scratch buffer.
+
+            let splitCommand = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_VSPLIT.keyName) ? 'vnew' : 'new'
             let winnr = bufwinnr('^' . a:vimHook.outputBufferName . '$')
             " If window doesn't exist, create a new one using
             " botright. If it does exist, just go to that
@@ -188,7 +192,6 @@ function! s:executeVimHook(vimHook, originalBufferName)
             setlocal noswapfile
             setlocal nowrap
             setlocal number
-
             let bufferFiletype = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_FILETYPE.keyName)
             if len(bufferFiletype)
                 execute 'setlocal filetype=' . bufferFiletype
@@ -198,7 +201,17 @@ function! s:executeVimHook(vimHook, originalBufferName)
             " Press some keys to get rid of the Press ENTER prompt
             call feedkeys('lh')
         else
-            let stdOutErr = system(a:vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:vimHook.event))
+            let cmd = a:vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:vimHook.event)
+            let async = a:vimHook.getOptionValue(g:VimHookOptions.ASYNC.keyName)
+            let wait = a:vimHook.getOptionValue(g:VimHookOptions.DEBOUNCE_WAIT.keyName)
+
+            if async
+                let cmd = cmd . ' &'
+            elseif wait
+                let cmd = s:plugindir . '/bin/debounce ' . wait . ' ' . cmd . ' &'
+            endif
+
+            let stdOutErr = system(cmd)
             if (v:shell_error != 0)
                 let errorMessages = errorMessages . "[vim-hooks] Script " . a:vimHook.baseName . " exited with error code " . v:shell_error . ". Printing message below:\n"
                 let errorMessages = errorMessages . "\n" . stdOutErr

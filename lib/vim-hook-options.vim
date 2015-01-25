@@ -11,6 +11,14 @@ let s:VimHookOptions = {
     \         'keyName': 'bufferoutput.filetype',
     \         'globalVariableName': 'g:vimhooks_bufferoutput_filetype'
     \     },
+    \     'ASYNC': {
+    \         'keyName': 'async',
+    \         'globalVariableName': 'g:vimhooks_async'
+    \     },
+    \     'DEBOUNCE_WAIT': {
+    \         'keyName': 'debounce.wait',
+    \         'globalVariableName': 'g:vimhooks_debounce_wait'
+    \     },
     \ }
 
 let g:VimHookOptions = s:VimHookOptions
