@@ -1,0 +1,49 @@
+#!/bin/sh
+
+SLEEP_TIME=$1
+HOOK=$2
+LOG_FILE="/tmp/debounce-test.log"
+
+# Find a suitable way to get milliseconds since the epoch. I'm not using
+# date out of the box because apparently date on Mac OS X doesn't support
+# anything more granular than seconds. So now I'll iterate through a few
+# executables where I know I can get the date in milliseconds and use the
+# first one I find.
+executables=("python" "ruby" "node" "date")
+for executable in "${executables[@]}"
+do
+    hash $executable &> /dev/null
+    if [ $? -eq 0 ]; then
+        if [ $executable == "python" ]; then
+            NOW=`echo "import time\nprint(time.time())" | python`
+        elif [$executable == "ruby" ]; then
+            NOW=`echo "print(Time.now.to_f)" | ruby`
+        elif [$executable == "node" ]; then
+            NOW=`echo "process.stdout.write(Date.now().toString());" | node`
+        elif [$executable == "date" ]; then
+            NOW=`date "+%s"`
+        fi
+        break
+    fi
+done
+
+# Write the timestamp to a special temp file
+echo $NOW > /tmp/vimhooks-last-debounce
+sleep $SLEEP_TIME
+
+# When done sleeping, check if the file contains the same timestamp that we
+# just wrote. If so, we are OK to execute. If not, then someone else has run
+# this script in the intervening time and we should just quietly exit.
+LAST_DEBOUNCE=`cat /tmp/vimhooks-last-debounce`
+if [ $NOW == $LAST_DEBOUNCE ]; then
+    echo "[`date`] No other debounced calls invoked. Running $HOOK" >> $LOG_FILE
+    # Invoke the hook as a normal executable, possibly prepending ./ to the
+    # front if it is in the current working directory.
+    if [[ $HOOK == /* ]]; then
+        $HOOK
+    else
+        ./$HOOK
+    fi
+else
+    echo "[`date`] Got superceded by another debounced call at $LAST_DEBOUNCE" >> $LOG_FILE
+fi
