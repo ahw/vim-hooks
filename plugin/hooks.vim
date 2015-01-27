@@ -197,8 +197,11 @@ function! s:executeVimHook(vimHook, originalBufferName)
             " Press some keys to get rid of the Press ENTER prompt
             call feedkeys('lh')
         else
-            execute '!' . a:vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:vimHook.event)
-            let errorMessages = (v:shell_error == 0) ? errorMessages : errorMessages . "[vim-hooks] Script " . a:vimHook.baseName . " exited with error code " . v:shell_error . "\n"
+            let stdOutErr = system(a:vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:vimHook.event))
+            if (v:shell_error != 0)
+                let errorMessages = errorMessages . "[vim-hooks] Script " . a:vimHook.baseName . " exited with error code " . v:shell_error . ". Printing message below:\n"
+                let errorMessages = errorMessages . "\n" . stdOutErr
+            endif
             redraw!
         endif
     elseif !a:vimHook.isIgnoreable && a:vimHook.isEnabled
