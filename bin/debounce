@@ -15,12 +15,12 @@ do
     hash $executable &> /dev/null
     if [ $? -eq 0 ]; then
         if [ $executable == "python" ]; then
-            NOW=`echo "import time\nprint(time.time())" | python`
-        elif [$executable == "ruby" ]; then
+            NOW=`echo "import time;print(time.time())" | python`
+        elif [ $executable == "ruby" ]; then
             NOW=`echo "print(Time.now.to_f)" | ruby`
-        elif [$executable == "node" ]; then
+        elif [ $executable == "node" ]; then
             NOW=`echo "process.stdout.write(Date.now().toString());" | node`
-        elif [$executable == "date" ]; then
+        elif [ $executable == "date" ]; then
             NOW=`date "+%s"`
         fi
         break
