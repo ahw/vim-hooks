@@ -213,8 +213,9 @@ function! s:executeVimHook(vimHook, originalBufferName)
 
             let stdOutErr = system(cmd)
             if (v:shell_error != 0)
-                let errorMessages = errorMessages . "[vim-hooks] Script " . a:vimHook.baseName . " exited with error code " . v:shell_error . ". Printing message below:\n"
-                let errorMessages = errorMessages . "\n" . stdOutErr
+                let errorMessages = errorMessages . "[vim-hooks] Script " . a:vimHook.baseName . " exited with error code " . v:shell_error . "\n"
+                let errorMessages = errorMessages . "[vim-hooks] Printing stdout and stderr below:\n"
+                let errorMessages = errorMessages . join(map(split(stdOutErr, "\n"), '"> " . v:val'), "\n") . "\n\n"
             endif
             redraw!
         endif
