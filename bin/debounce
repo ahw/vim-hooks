@@ -36,7 +36,7 @@ sleep $SLEEP_TIME
 # this script in the intervening time and we should just quietly exit.
 LAST_DEBOUNCE=`cat /tmp/vimhooks-last-debounce`
 if [ $NOW == $LAST_DEBOUNCE ]; then
-    echo "[`date`] No other debounced calls invoked. Running $HOOK" >> $LOG_FILE
+    # echo "[`date`] No other debounced calls invoked. Running $HOOK" >> $LOG_FILE
     # Invoke the hook as a normal executable, possibly prepending ./ to the
     # front if it is in the current working directory.
     if [[ $HOOK == /* ]]; then
@@ -45,5 +45,5 @@ if [ $NOW == $LAST_DEBOUNCE ]; then
         ./$HOOK $3 $4
     fi
 else
-    echo "[`date`] Got superceded by another debounced call at $LAST_DEBOUNCE" >> $LOG_FILE
+    # echo "[`date`] Got superceded by another debounced call at $LAST_DEBOUNCE" >> $LOG_FILE
 fi

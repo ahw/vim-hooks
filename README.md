@@ -161,32 +161,39 @@ The following are all equivalent ways of setting the `myOption` key to
 ```
 ### Available options
 
-Option Key                  | Behavior
----                         | ---
-vimhook.bufferoutput        | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently. (Default: false.)
-vimhook.bufferoutput.vsplit | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. (Default: false.)
+Option Key                  | Default | Behavior
+---                         | ---     | ---
+vimhook.bufferoutput        | false   | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently. (Default: false)
+vimhook.bufferoutput.vsplit | false   | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. (Default: false)
+vimhook.async               | false   | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether. (Default: false)
+vimhook.debounce.wait: N    | unset   | You can set the `vimhook.debounce.wait: N` option in a hook script to execute the script in a forked process after _N_ seconds have elapsed since the last trigger of this particular hook. Debounced hooks are implicitly async, so the disclaimers described for that option hold for debounced hooks too. (Default: unset)
 
 ### Set options globally
 
-All of the options listed above can be overridden on a global level in your
-`~/.vimrc` file. Each option key has a corresponding global variable name
-that **vim-hooks** will check for and use if it exists. These are documented in the table below.
-
-Option Key                  | Global variable name used for overriding
----                         | ---
-vimhook.bufferoutput        | g:vimhooks\_bufferoutput
-vimhook.bufferoutput.vsplit | g:vimhooks\_bufferoutput\_vsplit
-
-Global option settings are applied first and overridden on a per-hook basis
-wherever they are used. For example, if your `~/.vimrc` contains
+All of the options listed above can be set on a global level in your `~/.vimrc`
+file. Each option key has a corresponding global variable name that VimHooks
+will check for and use if it exists. Global option settings are applied first
+and overridden on a per-hook basis wherever they are used. For example, if your
+`~/.vimrc` contains
 
 ```vim
 let g:vimhooks_bufferoutput_vsplit = 1
 ```
 
-then buffer output windows will always open in a vertical split unless there
-is a `vimhook.bufferoutput.vsplit = 0` option setting in some particular hook
-script.
+then buffer output windows will always open in a vertical split unless there is
+a `vimhook.bufferoutput.vsplit = 0` option setting in some particular hook
+script. In that case, that particular script will open its buffer output window
+in a horizontal split.
+
+The full list of VimHook options and their corresponding global variables is
+given in the table below.
+
+Option Key                  | Global Variable
+---                         | ---
+vimhook.bufferoutput        | g:vimhooks\_bufferoutput
+vimhook.bufferoutput.vsplit | g:vimhooks\_bufferoutput\_vsplit
+vimhook.async               | g:vimhooks\_async
+vimhook.debounce.wait: N    | g:vimhooks\_debounce\_wait
 
 Commands
 ========
