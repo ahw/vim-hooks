@@ -332,6 +332,12 @@ aug END
 
 " Immediately run the s:findHookFiles function.
 call <SID>findHookFiles()
+" Re-run s:findHookFiles whenever *vimhook* files are written.
+augroup vimhooks
+    au!
+    au BufWritePost *vimhook* call <SID>findHookFiles()
+augroup END
+
 
 " Find all hook files in the current working directory
 command! -nargs=0 FindHookFiles call <SID>findHookFiles()

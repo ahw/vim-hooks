@@ -207,12 +207,12 @@ are listed before the disabled ones. Helpfully, within each of these
 groupings, the relative order of the hook scripts matches their order of
 execution.
 
-The buffer has a few buffer-only key
-mappings that allow you to interactively disable and re-enable VimHook scripts
-as well as open them in a new window. Below is a screenshot of the
-`:ListVimHooks` buffer demonstrating this functionality.
+The buffer has a few buffer-only key mappings that allow you to
+interactively disable and re-enable VimHook scripts as well as open them in
+a new window. Below is a screenshot of the `:ListVimHooks` buffer
+demonstrating this functionality.
 
-Note there are two sections in this buffer: the **Mappings** section which shows
+There are two sections in this buffer: the **Mappings** section which shows
 a "cheat sheet" of the buffer-local mappings and the **Hooks** section which, for
 each VimHook script, shows a checkbox indicating enabled/disabled state of the
 script, the matching pattern associated with that script (where `*` represents
@@ -220,6 +220,12 @@ a UNIX-style blob), the event associated with that script, and the path to the
 script. The `x` mapping is particularly useful as it allows you to quickly
 toggle on and off individual VimHook scripts as you move between projects that
 require different hooks.
+
+Pressing `s`, `i`, `o`, or `<CR>` will open the hook file for editing in one way or
+another. If you make changes to a hook file and save it, _the plugin will
+automatically pick up those changes_. It does this by listening for
+`BufWritePost` events on `*vimhook*`-patterned filenames and basically
+re-running `:FindHookFiles` for you.
 
 ![ListVimHooks GIF](http://g.recordit.co/o3mon5FhWu.gif)
 
@@ -232,8 +238,8 @@ The buffer-local mappings are inspired from NERDTree:
   an effect when on one of the lines in the "Hooks" section.
 - `s` Opens a VimHook script in a vertical split
 - `i` Opens a VimHook script in a horizontal split
-- `o`, `<CR>` Opens a VimHook script in the previous window. (If not possible, it
-  will open in a vertical split.)
+- `o`, Opens a VimHook script in the previous window. (If not possible, it will open in a vertical split.)
+- `<CR>`, Opens a VimHook script in the current window
 - `q`, `<ESC>` Closes the buffer
 
 FindHookFiles
@@ -243,9 +249,12 @@ runs when you start Vim with the plugin installed. It will "forget" any VimHook
 scripts it may have previously found and re-scan the current working directory
 as well as the `~/.vimhooks/` directory. Use this command if you have created a
 new VimHook script and want to start using it without closing and re-opening
-your entire Vim session. If you've set any new VimHook options in your
+your entire Vim session. ~~If you've set any new VimHook options in your
 scripts since starting Vim you'll need to run this command to pick those up
-too.
+too.~~ **Recent update:** the plugin now automatically reruns
+`:FindHookFiles` for you whenever you save a hook file. Isn't that nice? (In
+the background it is reacting to `BufWritePost` events on files that match
+against the `*vimhook*` pattern.)
 
 ExecuteHookFiles
 ----------------
