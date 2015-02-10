@@ -32,14 +32,36 @@ directory (as well as `~/.vimhooks/`) that have names like
 scripts whenever &ndash; in this example &ndash; Vim fires the `BufWritePost`
 and `CursorHold` `autocmd` events, respectively.
 
-VimHook scripts, which I refer to as "hook scripts," or just "hooks" throughout
-this document, can live at the project level or at a global level in
-`~/.vimhooks/`. They can be disabled by appending ".disabled" to the filename.
-Finally, although I'm getting a little ahead of myself here, the
-`:ListVimHooks` command provides a listing of all enabled and disabled hook
-scripts available in a particular session and from there, each hook can easily be
-toggled on and off interactively.
+VimHook scripts, which I refer to as "hook scripts," or just "hooks"
+throughout this document, can live at the project level or at a global level
+in `~/.vimhooks/`.  Hooks can be **synchronous** (the default) or
+**asynchronous** (in a fire-and-forget sort of way). The `autocmd` triggers
+can be **debounced** so hooks are only executed once within a specified
+window of time. The stdout produced by hook scripts can be loaded into a
+split window that refreshes automatically every time the hook is executed.
+Hooks that are configured to run silently will still report stderr when they
+exit with a non-zero exit code. Finally, the `:ListVimHooks` command
+provides a listing of all enabled and disabled hook scripts available in a
+particular session. They are listed in the order they would (synchronously)
+execute and can be toggled on and off interactively. You can make edits to
+hook scripts on the fly and the changes will be reflected the next time they
+are run.
 
+This plugin was motivated by the pain of the save-switch-reload cycle between
+editor and browser that eats up so much time in web development. I have
+included some [examples](#example-usage) that I think help illustrate how
+quickly you can exploit this plugin to speed up that iteration time. While I
+have found a number of editors which are able to "live preview" raw CSS changes
+or HTML changes, their capabilities almost always end there. How about when you
+want to Browserify your JavaScript? And compile and minify your Sass files?
+With this plugin you can restart your Jekyll server, you can play around with a
+SQL SELECT statement and see the query result in a split window&mdash;hell,
+I've even written hook scripts that run a build step and then pipe result over
+`ssh` to my laptop where I feed it to `pbcopy` so that I have it in my system
+clipboard in order to paste into an cumbersome content-scheduling tool at work
+(don't ask).
+
+<!--
 I wrote this plugin specifically to ease the write-save-switch-reload pain of
 web development, and although my most salient use case so far is the ability to
 auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`) in
@@ -47,12 +69,14 @@ Vim (see obnoxious flashing gif below), I have a feeling there are a lot of
 other interesting use cases out there. Recently I've added the ability to use
 Vim as a sort of REPL. If you've ever wanted an easy way of hooking arbitrary
 shell scripts into Vim events, this plugin is for you.
+-->
 
-In the next sections I'll describe how to install the **vim-hooks** plugin,
-give a bit of background on `autocommands` and events in Vim, and then explain
-in detail how to use **vim-hooks**, what additional options are available,
-and what commands the plugin exposes. If you are not familiar with
-`autocommand`s in Vim, run `:help autocommand` for an overview.
+If you've made it this far, congratulations. In the next sections I'll describe
+how to install the VimHooks plugin, give a bit of background on `autocommands`
+and events in Vim, and then explain in detail how to use VimHooks, what
+additional options are available, and what commands the plugin exposes. If you
+are not familiar with `autocommand`s in Vim, run `:help autocommand` for an
+overview.
 
 Demos
 =====
@@ -84,12 +108,12 @@ then simply copy and paste:
 How it works
 ============
 When some event **E** is fired from a Vim buffer named **F** (i.e., the
-filename), VimHooks looks through the list of all hook scripts in the current
-working directory and `~/.vimhooks/`, and executes those hooks whose **event**
-property is **E** and whose **matching suffix** matches **F**.
-These and other properties are embedded in the hook script filename itself and
-follow a specific naming pattern so that the plugin can parse them out. This pattern
-is described in the next section.
+filename), VimHooks looks through the list of all hook scripts in the
+current working directory and `~/.vimhooks/`, and executes those
+hooks whose **event** property is **E** and whose **matching suffix**
+property matches **F**.<sup>1</sup> These and other properties are embedded
+in the hook script filename itself and follow a specific naming pattern so
+that the plugin can parse them out. This pattern is described below.
 <!-- The **matching suffix** matches **F** when **F** ends in **matching suffix**.-->
 
 VimHook naming pattern
@@ -108,14 +132,15 @@ Note that in general, each component of the pattern is separated by a "." from
 the other components, though the **matching suffix** can itself contains dots
 and VimHooks knows how to accommodate these. When you leave off one of the
 optional pattern components (e.g., **sort key**) you do not need to include the
-dot marking its place.
+dot marking its place. Thus, `bufwritepost.vimhook.sh`,
+`js.bufwritepost.vimhook.rb`, and `.001.foo.bar.py.bufwritepost.vimhook.js`
+are all valid VimHook filenames.
 
 Arguments provided to a hook script
 -----------------------------------
 Each script is passed the name of the current buffer and the triggered event
-name as command-line arguments. So in a Bash shell script you could, for
-example, use `$1` and `$2` to access these values. The plugin only supports
-synchronous execution of VimHook scripts.
+name as command-line arguments, in that order. So in a Bash shell script you
+could, for example, use `$1` and `$2` to access these values.
 
 VimHook Options
 ===============
@@ -126,7 +151,7 @@ script itself (as opposed to a config file &mdash; I am trying to keep the
 overhead of this plugin as minimal as possible).
 
 ### How to set options
-During initialization, **vim-hooks** scans through the contents of each
+During initialization, VimHooks scans through the contents of each
 VimHook script and parses out any option flags it finds, and then applies
 them to that hook script for the duration of the session. To set an option
 flag and value in your VimHook script, add a line anywhere in the file that
@@ -141,32 +166,41 @@ _The full grammar of a VimHook option line. Source: [www.regexper.com](http://ww
 ![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
 
 For example, the following lines are all equivalent ways of setting the
-option `myOption` to `true`. Notice (in the last line) that you are not
+option `bufferoutput` to `true`. Notice (in the last line) that you are not
 forced to set an option value. If you only provide an option key, the value
 will be automatically set to `true`.
 
 ```
-# vimhook.myOption = true
-// vimhook.myOption : true
--- vimhook.myOption:1
-// foo bar baz vimhook.myOption
+# vimhook.bufferoutput = true
+// vimhook.bufferoutput : true
+-- vimhook.bufferoutput:1
+// foo bar baz vimhook.bufferoutput
 ```
 
-The following are all equivalent ways of setting the `myOption` key to
+The following are all equivalent ways of setting the `bufferoutput` key to
 `false`.
 ```
-# vimhook.myOption = false
->>> vimhook.myOption : false
-" vimhook.myOption:0
+# vimhook.bufferoutput = false
+>>> vimhook.bufferoutput : false
+" vimhook.bufferoutput:0
+```
+
+For the sake of showing an example of a non-boolean option, these are all
+equivalent ways of setting the option `debounce.wait` to 2 seconds.
+
+```
+# vimhook.debounce.wait = 2
+// vimhook.debounce.wait: 2
+-- vimhook.debounce.wait : 2
 ```
 ### Available options
 
 Option Key                  | Default | Behavior
 ---                         | ---     | ---
-vimhook.bufferoutput        | false   | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently. (Default: false)
-vimhook.bufferoutput.vsplit | false   | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. (Default: false)
-vimhook.async               | false   | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether. (Default: false)
-vimhook.debounce.wait: N    | unset   | You can set the `vimhook.debounce.wait: N` option in a hook script to execute the script in a forked process after _N_ seconds have elapsed since the last trigger of this particular hook. Debounced hooks are implicitly async, so the disclaimers described for that option hold for debounced hooks too. (Default: unset)
+vimhook.bufferoutput        | false   | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently, though stderr is still reported when scripts exit with a non-zero exit code. **Default: false**
+vimhook.bufferoutput.vsplit | false   | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. **Default: false**
+vimhook.async               | false   | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether ("fire and forget"). **Default: false**
+vimhook.debounce.wait: N    | unset   | You can set the `vimhook.debounce.wait: N` option in a hook script to execute the script in a forked process after _N_ seconds have elapsed since the last trigger of this particular hook. Debounced hooks are implicitly async, so the disclaimers described for that option hold for debounced hooks too. **Default: unset**
 
 ### Set options globally
 
@@ -204,27 +238,22 @@ unmodifiable buffer in a horizontal split which lists all of the VimHook
 script files the plugin has found after scanning the current working
 directory as well as the `~/.vimhooks/` directory. The enabled hook scripts
 are listed before the disabled ones. Helpfully, within each of these
-groupings, the relative order of the hook scripts matches their order of
-execution.
-
-The buffer has a few buffer-only key mappings that allow you to
-interactively disable and re-enable VimHook scripts as well as open them in
-a new window. Below is a screenshot of the `:ListVimHooks` buffer
-demonstrating this functionality.
+groupings, the _relative order of the hook scripts matches their order of
+execution._
 
 There are two sections in this buffer: the **Mappings** section which shows
-a "cheat sheet" of the buffer-local mappings and the **Hooks** section which, for
-each VimHook script, shows a checkbox indicating enabled/disabled state of the
-script, the matching pattern associated with that script (where `*` represents
-a UNIX-style blob), the event associated with that script, and the path to the
-script. The `x` mapping is particularly useful as it allows you to quickly
-toggle on and off individual VimHook scripts as you move between projects that
-require different hooks.
+a "cheat sheet" of the buffer-local mappings and the **Hooks** section
+which, for each VimHook script, shows a checkbox indicating the
+enabled/disabled state of the script (checked means enabled), the matching
+suffix (where `*` represents a UNIX-style blob), the `autocommand` event which
+triggers the script, and the path to the script.  The `x` mapping is
+particularly useful as it allows you to quickly toggle on and off individual
+VimHook scripts as you move between projects that require different hooks.
 
-Pressing `s`, `i`, `o`, or `<CR>` will open the hook file for editing in one way or
-another. If you make changes to a hook file and save it, _the plugin will
-automatically pick up those changes_. It does this by listening for
-`BufWritePost` events on `*vimhook*`-patterned filenames and basically
+Pressing `s`, `i`, `o`, or `<CR>` will open the hook file for editing in one
+way or another. If you make changes to a hook file and save it, the plugin
+will automatically pick up those changes. Isn't that nice? It does this by
+listening for `BufWritePost` events on `*vimhook*`-patterned filenames and
 re-running `:FindHookFiles` for you.
 
 ![ListVimHooks GIF](http://g.recordit.co/o3mon5FhWu.gif)
@@ -240,21 +269,15 @@ The buffer-local mappings are inspired from NERDTree:
 - `i` Opens a VimHook script in a horizontal split
 - `o`, Opens a VimHook script in the previous window. (If not possible, it will open in a vertical split.)
 - `<CR>`, Opens a VimHook script in the current window
-- `q`, `<ESC>` Closes the buffer
 
 FindHookFiles
 -------------
-The `:FindHookFiles` command re-runs the same initializing logic **vim-hooks**
+The `:FindHookFiles` command re-runs the same initializing logic VimHooks
 runs when you start Vim with the plugin installed. It will "forget" any VimHook
 scripts it may have previously found and re-scan the current working directory
 as well as the `~/.vimhooks/` directory. Use this command if you have created a
 new VimHook script and want to start using it without closing and re-opening
-your entire Vim session. ~~If you've set any new VimHook options in your
-scripts since starting Vim you'll need to run this command to pick those up
-too.~~ **Recent update:** the plugin now automatically reruns
-`:FindHookFiles` for you whenever you save a hook file. Isn't that nice? (In
-the background it is reacting to `BufWritePost` events on files that match
-against the `*vimhook*` pattern.)
+your entire Vim session.
 
 ExecuteHookFiles
 ----------------
@@ -290,7 +313,7 @@ duration of your Vim session.*
 
 Which autocmd events are exposed by Vim Hooks?
 ==============================================
-Currently, **vim-hooks** responds to
+Currently, VimHooks responds to
 
 - `BufAdd`
 - `BufNew`
@@ -305,7 +328,7 @@ Currently, **vim-hooks** responds to
 - `BufWritePost`
 
 Adding others is not difficult, but I thought there could be a negative
-performance impact if **vim-hooks** was setting up listeners for _every_ Vim
+performance impact if VimHooks was setting up listeners for _every_ Vim
 `autocmd` event. I haven't actually tested whether or not this is true because
 so far my use cases are covered with the few events listed above.
 
@@ -320,28 +343,16 @@ or pull request.
 
 Example Usage
 =============
-This plugin was motivated by the pain of the save-switch-reload cycle
-between editor and browser that eats up so much time in web development. The
-examples that follow show off how quickly you can exploit this plugin to
-speed up that iteration time. While I have found a number of editors which
-are able to "live preview" raw CSS changes or HTML changes, their
-capabilities almost always end there. How about when you need to minify and
-closure-compile your JavaScript? And compile and minify your Sass
-files?
-
-Recently I've also added the ability to use Vim as a sort of REPL by passing in
-the `vimhook.bufferoutput` option flag in the source of any VimHook script.
-With that option flag set, VimHooks will dump the stdout from the hook script
-into its own Vim buffer which opens automatically in a new window.  When the
-hook script is run again, that buffer is automatically refreshed. Now you can
-start writing code and see the results immediately without leaving Vim. I find
-it insanely useful in particular when trying to hammer out some new code and
-can only half remember the API of some library I'm using.
-
-**Links to Example Scripts**
 - [Restart your Jekyll preview server on file write](https://github.com/ahw/vim-hooks/blob/master/examples/090.bufwritepost.vimhook.restart-jekyll-server.sh)
 - [Reload Chrome tabs on file write](https://github.com/ahw/vim-hooks/blob/master/examples/100.bufwritepost.vimhook.chrome-reloader.sh)
 - [Reload Chrome, Firefox, and Safari on file write](https://github.com/ahw/vim-hooks/blob/master/examples/bufwritepost.vimhook.reload-browsers.applescript)
 - [Recompile Sass files on file write](https://github.com/ahw/vim-hooks/blob/master/examples/scss.bufwritepost.vimhook.recompile-sass.sh)
 - [Execute SQL via sqlite3 on file write](https://github.com/ahw/vim-hooks/blob/master/examples/sql.bufwritepost.vimhook.sh)
 - [Dump stdout from a hook into a scratch buffer](https://github.com/ahw/vim-hooks/blob/master/examples/test.js.bufwritepost.vimhook.buffer-output.sh)
+
+Footnotes
+=========
+<sup>1</sup> Actually, VimHooks only iterates over all the hook files for the
+very first trigger of some new filename/event combination. It populates a cache
+which is accessed whenever that same filename/event combination is fired
+again.
