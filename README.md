@@ -32,6 +32,8 @@ directory (as well as `~/.vimhooks/`) that have names like
 scripts whenever &ndash; in this example &ndash; Vim fires the `BufWritePost`
 and `CursorHold` `autocmd` events, respectively.
 
+![VimHooks Flow](https://s3.amazonaws.com/pd93f014/vim-hooks-drawing-svg?v=1)
+
 VimHook scripts, which I refer to as "hook scripts," or just "hooks"
 throughout this document, can live at the project level or at a global level
 in `~/.vimhooks/`.  Hooks can be **synchronous** (the default) or
