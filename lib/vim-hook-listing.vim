@@ -68,18 +68,26 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
 
     let enabledHooksText = ""
     let disabledHooksText = ""
+    let ignoreEnabledStateFlag = g:VimHookOptions.IGNORE_ENABLED_STATE.globalVariableName
     if len(a:allVimHooks)
         for vimHook in a:allVimHooks
             let line = (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, self.columnWidths.pattern + 2) . self.pad(vimHook.event, self.columnWidths.event + 2) . vimHook.path
-            if vimHook.isEnabled
+            if exists(ignoreEnabledStateFlag) && eval(ignoreEnabledStateFlag)
+                echom "Ignoring the enabled/disabled state"
                 let enabledHooksText = s:joinWithNewline(enabledHooksText, line)
-                call insert(self.vimHooksByListingIndex, vimHook, enabledHooksIndex)
-                let enabledHooksIndex += 1
-                let disabledHooksIndex += 1
+                call add(self.vimHooksByListingIndex, vimHook)
             else
-                let disabledHooksText = s:joinWithNewline(disabledHooksText, line)
-                call insert(self.vimHooksByListingIndex, vimHook, disabledHooksIndex)
-                let disabledHooksIndex += 1
+                echom "Listing enabled hooks first, then disabled ones"
+                if vimHook.isEnabled
+                    let enabledHooksText = s:joinWithNewline(enabledHooksText, line)
+                    call insert(self.vimHooksByListingIndex, vimHook, enabledHooksIndex)
+                    let enabledHooksIndex += 1
+                    let disabledHooksIndex += 1
+                else
+                    let disabledHooksText = s:joinWithNewline(disabledHooksText, line)
+                    call insert(self.vimHooksByListingIndex, vimHook, disabledHooksIndex)
+                    let disabledHooksIndex += 1
+                endif
             endif
         endfor
         " The blocks of text listing enabled and disabled hooks already has

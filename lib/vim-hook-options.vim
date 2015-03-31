@@ -19,6 +19,10 @@ let s:VimHookOptions = {
     \         'keyName': 'debounce.wait',
     \         'globalVariableName': 'g:vimhooks_debounce_wait'
     \     },
+    \     'IGNORE_ENABLED_STATE': {
+    \         'keyName': 'ignore_enabled_state',
+    \         'globalVariableName': 'g:vimhooks_ignore_enabled_state'
+    \     },
     \ }
 
 let g:VimHookOptions = s:VimHookOptions
