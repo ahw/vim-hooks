@@ -24,7 +24,7 @@ endfunction
 function! s:VimHookListing.updateColumnWidths(vimHook)
     let self.columnWidths['pattern'] = max([len(a:vimHook.unixStylePattern), self.columnWidths['pattern']])
     let self.columnWidths['event'] = max([len(a:vimHook.event), self.columnWidths['event']])
-    let self.columnWidths['path'] = max([len(a:vimHook.path), self.columnWidths['path']])
+    let self.columnWidths['path'] = max([len(a:vimHook.prettyPath), self.columnWidths['path']])
 endfunction
 
 " FUNCTION: VimHookListing.isCheckboxLine()
@@ -71,7 +71,7 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
     let ignoreEnabledStateFlag = g:VimHookOptions.IGNORE_ENABLED_STATE.globalVariableName
     if len(a:allVimHooks)
         for vimHook in a:allVimHooks
-            let line = (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, self.columnWidths.pattern + 2) . self.pad(vimHook.event, self.columnWidths.event + 2) . vimHook.path
+            let line = (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, self.columnWidths.pattern + 2) . self.pad(vimHook.event, self.columnWidths.event + 2) . vimHook.prettyPath
             if exists(ignoreEnabledStateFlag) && eval(ignoreEnabledStateFlag)
                 echom "Ignoring the enabled/disabled state"
                 let enabledHooksText = s:joinWithNewline(enabledHooksText, line)

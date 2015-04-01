@@ -10,7 +10,15 @@ function! s:VimHook.New(path, event, pattern)
         " If path does not begin with a leading slash, add a "./" to make it
         " executable
         let newVimHook.path = "./" . a:path
+        let newVimHook.prettyPath = newVimHook.path
+    else
+        " Else, leave path as-is, but replace the leading slash stuff with
+        " tilda (we are assuming that hooks of the form
+        " /home/whatever/.vimhooks/bufwritepost.vimhook.sh can always be
+        " referenced as ~/.vimhooks/bufwritepost.vimhook.s).
+        let newVimHook.prettyPath = substitute(newVimHook.path, '\v/.+\/\.vimhooks\/', "~/.vimhooks/", "")
     endif
+
     " Create a unique id for this VimHook. For now we'll assume the path to
     " the hook file is unique, even if we chop off the ".disabled" part,
     " which may or may not exist.
