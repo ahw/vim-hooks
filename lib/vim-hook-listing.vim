@@ -73,11 +73,9 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
         for vimHook in a:allVimHooks
             let line = (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, self.columnWidths.pattern + 2) . self.pad(vimHook.event, self.columnWidths.event + 2) . vimHook.prettyPath
             if exists(ignoreEnabledStateFlag) && eval(ignoreEnabledStateFlag)
-                echom "Ignoring the enabled/disabled state"
                 let enabledHooksText = s:joinWithNewline(enabledHooksText, line)
                 call add(self.vimHooksByListingIndex, vimHook)
             else
-                echom "Listing enabled hooks first, then disabled ones"
                 if vimHook.isEnabled
                     let enabledHooksText = s:joinWithNewline(enabledHooksText, line)
                     call insert(self.vimHooksByListingIndex, vimHook, enabledHooksIndex)
