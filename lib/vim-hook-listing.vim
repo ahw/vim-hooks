@@ -68,11 +68,12 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
 
     let enabledHooksText = ""
     let disabledHooksText = ""
-    let ignoreEnabledStateFlag = g:VimHookOptions.IGNORE_ENABLED_STATE.globalVariableName
+    let shouldListEnabledFirst = g:VimHookOptions.LIST_ENABLED_FIRST.globalVariableName
     if len(a:allVimHooks)
         for vimHook in a:allVimHooks
             let line = (vimHook.isEnabled ? checkedbox : uncheckedbox) . ' ' . self.pad(vimHook.unixStylePattern, self.columnWidths.pattern + 2) . self.pad(vimHook.event, self.columnWidths.event + 2) . vimHook.prettyPath
-            if exists(ignoreEnabledStateFlag) && eval(ignoreEnabledStateFlag)
+            if exists(shouldListEnabledFirst) && !eval(shouldListEnabledFirst)
+                " Assert: the flag is set and is set to false.
                 let enabledHooksText = s:joinWithNewline(enabledHooksText, line)
                 call add(self.vimHooksByListingIndex, vimHook)
             else
