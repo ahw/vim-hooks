@@ -84,7 +84,8 @@ syntax keyword VimHooksEvent MenuPopup
 syntax keyword VimHooksEvent User
 
 syntax match VimHooksMapKey /\v^[<>a-z]+/
-syntax match VimHooksDisabledCheckbox /\v\[\s\].+/ contains=VimHooksBaseName
+" syntax match VimHooksDisabledCheckbox /\v\[\s\].+/ contains=VimHooksBaseName
+syntax match VimHooksDisabledCheckbox /\v\[\s\].+/
 syntax match VimHooksEnabledCheckbox /\v\[x\]/
 syntax match VimHooksHeader /\v^\a+$/
 syntax match VimHooksHeader /\v^-+$/
@@ -92,9 +93,9 @@ syntax match VimHooksBaseName /\C\v[^/]+vimhook[^/]+$/
 
 highlight link VimHooksHeader Special
 highlight link VimHooksDisabledCheckbox Comment
-highlight link VimHooksEnabledCheckbox Identifier
+highlight link VimHooksEnabledCheckbox Special
 highlight link VimHooksMapKey Identifier
-highlight link VimHooksBaseName Special
+" highlight link VimHooksBaseName Normal
 
 " syntax match VimHooksCursor /\v^\>/
 " highlight link VimHooksCursor Normal
