@@ -9,8 +9,8 @@
     - [**New!** VimHook naming pattern](#vimhook-naming-pattern)
     - [Arguments provided to a hook script](#arguments-provided-to-a-hook-script)
 - [**New!** VimHook Options](#vimhook-options)
-    - [How to set options](#how-to-set-options)
     - [Available options](#available-options)
+    - [How to set options](#how-to-set-options)
 - [Commands](#commands)
     - [ListVimHooks](#listvimhooks)
     - [FindHookFiles](#findhookfiles)
@@ -147,8 +147,31 @@ VimHook Options
 ===============
 As of release [1.4.1](https://github.com/ahw/vim-hooks/releases/tag/1.4.1),
 VimHook supports additional functionality that is exposed by setting various
-VimHook _options_. Option flags are set either (1) _in the source code_ of the hook
-script to which they pertain or (2) globally, via global variables in your `~/.vimrc`.
+VimHook _options_. Option flags are set either (1) _in the source code_ of a hook
+script or (2) globally, via global variables in your `~/.vimrc`.
+
+### Available options
+
+Option Key                  | Global Variable                | Behavior
+---                         | ---                            | ---
+vimhook.bufferoutput        | g:vimhooks_bufferoutput        | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently, though stderr is still reported when scripts exit with a non-zero exit code. **Default: false**
+vimhook.bufferoutput.vsplit | g:vimhooks_bufferoutput_vsplit | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. **Default: false**
+vimhook.async               | g:vimhooks_async               | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether ("fire and forget"). **Default: false**
+vimhook.debounce.wait: N    | g:vimhooks_debounce_wait       | You can set the `vimhook.debounce.wait: N` option in a hook script to execute the script in a forked process after _N_ seconds have elapsed since the last trigger of this particular hook. Debounced hooks are implicitly async, so the disclaimers described for that option hold for debounced hooks too. **Default: unset**
+_(Not applicable)_          | g:vimhooks_list_enabled_first  | When explicitly set to false, `:ListVimHooks` will stop grouping enabled hooks first and disabled hooks second. Instead, all hooks are listed in lexicographical order. **Default: true**
+
+Note that global option settings are applied first
+and overridden on a per-hook basis wherever they are used. For example, if your
+`~/.vimrc` contains
+
+```vim
+let g:vimhooks_bufferoutput_vsplit = 1
+```
+
+then buffer output windows will always open in a vertical split unless there is
+a `vimhook.bufferoutput.vsplit = 0` option setting in some particular hook
+script. In that case, that particular script will open its buffer output window
+in a horizontal split.
 
 ### How to set options
 To set an option
@@ -191,28 +214,6 @@ equivalent ways of setting the option `debounce.wait` to 2 seconds.
 // vimhook.debounce.wait: 2
 -- vimhook.debounce.wait : 2
 ```
-### Available options
-
-Option Key                  | Global Variable                | Default | Behavior
----                         | ---                            | ---     | ---
-vimhook.bufferoutput        | g:vimhooks_bufferoutput        | false   | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently, though stderr is still reported when scripts exit with a non-zero exit code. **Default: false**
-vimhook.bufferoutput.vsplit | g:vimhooks_bufferoutput_vsplit | false   | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. **Default: false**
-vimhook.async               | g:vimhooks_async               | false   | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether ("fire and forget"). **Default: false**
-vimhook.debounce.wait: N    | g:vimhooks_debounce_wait       | unset   | You can set the `vimhook.debounce.wait: N` option in a hook script to execute the script in a forked process after _N_ seconds have elapsed since the last trigger of this particular hook. Debounced hooks are implicitly async, so the disclaimers described for that option hold for debounced hooks too. **Default: unset**
-_(Not applicable)_          | g:vimhooks_list_enabled_first  | true    | When explicitly set to false, `:ListVimHooks` will stop grouping enabled hooks first and disabled hooks second. Instead, all hooks are listed in lexicographical order. **Default: true**
-
-Note that global option settings are applied first
-and overridden on a per-hook basis wherever they are used. For example, if your
-`~/.vimrc` contains
-
-```vim
-let g:vimhooks_bufferoutput_vsplit = 1
-```
-
-then buffer output windows will always open in a vertical split unless there is
-a `vimhook.bufferoutput.vsplit = 0` option setting in some particular hook
-script. In that case, that particular script will open its buffer output window
-in a horizontal split.
 
 Commands
 ========
@@ -338,6 +339,6 @@ Example Usage
 Footnotes
 =========
 <sup>1</sup> Actually, VimHooks only iterates over all the hook files for the
-very first trigger of some new filename/event combination. It populates a cache
+very first trigger of some new filename/event combination. It then populates a cache
 which is accessed whenever that same filename/event combination is fired
 again.
