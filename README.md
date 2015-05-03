@@ -9,8 +9,10 @@
     - [**New!** VimHook naming pattern](#vimhook-naming-pattern)
     - [Arguments provided to a hook script](#arguments-provided-to-a-hook-script)
 - [**New!** VimHook Options](#vimhook-options)
-    - [Available options](#available-options)
     - [How to set options](#how-to-set-options)
+    - [Available options](#available-options)
+    - [More on setting options](#more-on-setting-options)
+    - [VimHook options grammar](#vimhook-options-grammar)
 - [Commands](#commands)
     - [ListVimHooks](#listvimhooks)
     - [FindHookFiles](#findhookfiles)
@@ -145,58 +147,47 @@ could, for example, use `$1` and `$2` to access these values.
 
 VimHook Options
 ===============
-As of release [1.4.1](https://github.com/ahw/vim-hooks/releases/tag/1.4.1),
-VimHook supports additional functionality that is exposed by setting various
-VimHook _options_. Option flags are set either (1) _in the source code_ of a hook
-script or (2) globally, via global variables in your `~/.vimrc`.
+VimHooks supports additional functionality that is exposed by setting
+various VimHook _options_. Option flags are set either (1) _in the source
+code_ of a hook script or (2) globally, via global variables in your
+`~/.vimrc`.
+
+### How to set options
+To set an option flag and value in your VimHook script, add a line anywhere
+in the file that follows the convention `vimhook.myOptionKey = myOptionValue`.
+
+```
+# vimhook.bufferoutput = true
+```
 
 ### Available options
 
-Option Key                    | Global Variable                  | Behavior
----                           | ---                              | ---
-vimhook.bufferoutput          | g:vimhooks_bufferoutput          | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently, though stderr is still reported when scripts exit with a non-zero exit code. **Default: false**
-vimhook.bufferoutput.vsplit   | g:vimhooks_bufferoutput_vsplit   | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. **Default: false**
-vimhook.bufferoutput.filetype | g:vimhooks_bufferoutput_filetype | Sets the filetype of the output buffer to whatever value is provided. Useful if you want to get syntax highlighting or some other filetype-specific goodness from the output buffer. **Default: unset**
-vimhook.async                 | g:vimhooks_async                 | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether ("fire and forget"). **Default: false**
-vimhook.debounce.wait: N      | g:vimhooks_debounce_wait         | You can set the `vimhook.debounce.wait: N` option in a hook script to execute the script in a forked process after _N_ seconds have elapsed since the last trigger of this particular hook. Debounced hooks are implicitly async, so the disclaimers described for that option hold for debounced hooks too. **Default: unset**
-_(Not applicable)_            | g:vimhooks_list_enabled_first    | When explicitly set to false, `:ListVimHooks` will stop grouping enabled hooks first and disabled hooks second. Instead, all hooks are listed in lexicographical order. **Default: true**
+Option Key/                   <br>Global Variable                  | Behavior
+---                                                                | ---
+vimhook.bufferoutput          <br>g:vimhooks_bufferoutput          | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently, though stderr is still reported when scripts exit with a non-zero exit code. **Default: false**
+vimhook.bufferoutput.vsplit   <br>g:vimhooks_bufferoutput_vsplit   | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. **Default: false**
+vimhook.bufferoutput.filetype <br>g:vimhooks_bufferoutput_filetype | Sets the filetype of the output buffer to whatever value is provided. Useful if you want to get syntax highlighting or some other filetype-specific goodness from the output buffer. **Default: unset**
+vimhook.bufferoutput.feedkeys <br>g:vimhooks_bufferoutput_feedkeys | Executes whatever Normal commands are provided. For example, `vimhook.bufferoutput.feedkeys = G` would cause the output buffer to always scroll to the bottom. **Default: unset**
+vimhook.async                 <br>g:vimhooks_async                 | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether ("fire and forget"). **Default: false**
+vimhook.debounce.wait: N      <br>g:vimhooks_debounce_wait         | You can set the `vimhook.debounce.wait: N` option in a hook script to execute the script in a forked process after _N_ seconds have elapsed since the last trigger of this particular hook. Debounced hooks are implicitly async, so the disclaimers described for that option hold for debounced hooks too. **Default: unset**
+_(Not applicable)_            <br>g:vimhooks_list_enabled_first    | When explicitly set to false, `:ListVimHooks` will stop grouping enabled hooks first and disabled hooks second. Instead, all hooks are listed in lexicographical order. **Default: true**
 
-Note that global option settings are applied first
-and overridden on a per-hook basis wherever they are used. For example, if your
-`~/.vimrc` contains
+### More on setting options
+Global option settings are applied first and overridden on a per-hook basis
+wherever they are used.
 
-```vim
-let g:vimhooks_bufferoutput_vsplit = 1
-```
-
-then buffer output windows will always open in a vertical split unless there is
-a `vimhook.bufferoutput.vsplit = 0` option setting in some particular hook
-script. In that case, that particular script will open its buffer output window
-in a horizontal split.
-
-### How to set options
-To set an option
-flag and value in your VimHook script, add a line anywhere in the file that
-follows the convention `vimhook.myOptionKey = myOptionValue`. The line can
-begin with anything you want (like a comment character) but should not have
-anything after the `myOptionValue` part. Whitespace around the `=` sign is
-irrelevant. You can use a `:` instead of an `=` sign if you prefer.
-
-![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-option-grammar-1.svg)
-
-_The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.%28%5B%5Cw%5C.%5D%2B%29%5Cs%2A%5B%3A%3D%5D%3F%5Cs%2A%28%5Cw%2A%29%2524)_
-![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
-
-For example, the following lines are all equivalent ways of setting the
-option `bufferoutput` to `true`. Notice (in the last line) that you are not
-forced to set an option value. If you only provide an option key, the value
-will be automatically set to `true`.
+The option line can begin with anything you want (like a comment character)
+but should not have anything after the `myOptionValue` part. Whitespace
+around the `=` sign is irrelevant. You can use a `:` instead of an `=` sign
+if you prefer. **Options with no value defined are implicitly set to "true".**
+For example, here are some equivalent ways of setting the option
+`bufferoutput` to `true`.
 
 ```
 # vimhook.bufferoutput = true
 // vimhook.bufferoutput : true
 -- vimhook.bufferoutput:1
-// foo bar baz vimhook.bufferoutput
+// some other comment here then vimhook.bufferoutput
 ```
 
 The following are all equivalent ways of setting the `bufferoutput` key to
@@ -215,6 +206,16 @@ equivalent ways of setting the option `debounce.wait` to 2 seconds.
 // vimhook.debounce.wait: 2
 -- vimhook.debounce.wait : 2
 ```
+
+### VimHook options grammar
+
+If you're into this sort of thing, here it is.
+
+![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-option-grammar-1.svg)
+
+_The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.%28%5B%5Cw%5C.%5D%2B%29%5Cs%2A%5B%3A%3D%5D%3F%5Cs%2A%28%5Cw%2A%29%2524)_
+![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
+
 
 Commands
 ========
