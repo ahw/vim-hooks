@@ -180,6 +180,8 @@ function! s:executeVimHook(vimHook, originalBufferName)
             " Buffer output case. Dump stdout into a scratch buffer.
 
             let splitCommand = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_VSPLIT.keyName) ? 'vnew' : 'new'
+            let bufferFiletype = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_FILETYPE.keyName)
+            let feedKeys = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_FEEDKEYS.keyName)
             let winnr = bufwinnr('^' . a:vimHook.outputBufferName . '$')
             " If window doesn't exist, create a new one using
             " botright. If it does exist, just go to that
@@ -192,14 +194,26 @@ function! s:executeVimHook(vimHook, originalBufferName)
             setlocal noswapfile
             setlocal nowrap
             setlocal number
-            let bufferFiletype = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_FILETYPE.keyName)
-            if len(bufferFiletype)
+            if (bufferFiletype)
+                echom "[vim-hooks] output buffer setlocal filetype=" . bufferFiletype
                 execute 'setlocal filetype=' . bufferFiletype
             endif
 
             execute 'silent %!'. a:vimHook.path . ' ' . shellescape(a:originalBufferName) . ' ' . shellescape(a:vimHook.event)
+
             " Press some keys to get rid of the Press ENTER prompt
             call feedkeys('lh')
+
+            if type(feedKeys) == type("") && len(feedKeys)
+                let originalBufferWindow = bufwinnr(a:originalBufferName)
+                let outputBufferWindow = bufwinnr(a:vimHook.outputBufferName)
+                execute outputBufferWindow . 'wincmd w'
+                echom "[vim-hooks] sending keys in Normal mode to output buffer: " . feedKeys
+                execute "normal  " . feedKeys
+                execute originalBufferWindow . 'wincmd w'
+            else
+            endif
+
         else
             let cmd = a:vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:vimHook.event)
             let async = a:vimHook.getOptionValue(g:VimHookOptions.ASYNC.keyName)
@@ -227,7 +241,7 @@ function! s:executeVimHook(vimHook, originalBufferName)
         echo "[vim-hooks] Could not execute script " . a:vimHook.path . " because it does not have \"execute\" permissions.\nSet executable bit (chmod u+x) [yn]? "
         let key = nr2char(getchar())
         if key ==# 'y'
-            echom "Running chmod u+x " . a:vimHook.path
+            echom "[vim-hooks] Running chmod u+x " . a:vimHook.path
             execute "!chmod u+x " . a:vimHook.path
         elseif key ==# 'n'
             call a:vimHook.ignore()
