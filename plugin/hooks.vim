@@ -324,6 +324,7 @@ aug VimHookListingGroup
     au FileType hooks nnoremap <silent> <buffer> s    :call g:VimHookListing.openLineInVerticalSplit()<cr>
     au FileType hooks nnoremap <silent> <buffer> o    :call g:VimHookListing.openLineInPreviousWindow()<cr>
     au FileType hooks nnoremap <silent> <buffer> d    :call g:VimHookListing.deleteLine()<cr>
+    au FileType hooks nnoremap <silent> <buffer> r    :call g:VimHookListing.runLineSynchronously()<cr>
     au FileType hooks nnoremap <silent> <buffer> <cr> :call g:VimHookListing.openLineInCurrentWindow()<cr>
     " These existed in early version of the plugin
     " au FileType hooks nnoremap <silent> <buffer> q :call g:VimHookListing.exitBuffer()<cr>

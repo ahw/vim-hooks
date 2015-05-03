@@ -53,6 +53,7 @@ function! s:VimHookListing.getVimHookListingText(allVimHooks)
     let text = s:joinWithNewline(text, '--------')
     let text = s:joinWithNewline(text, 'x     : enable/disable a VimHook')
     let text = s:joinWithNewline(text, 'd     : delete a VimHook (runs rm -i so you will be prompted to confirm)')
+    let text = s:joinWithNewline(text, 'r     : run a VimHook manually in "debug" mode (all output is echoed to screen)')
     let text = s:joinWithNewline(text, 'i     : open VimHook script in split')
     let text = s:joinWithNewline(text, 's     : open VimHook script in vertical split')
     let text = s:joinWithNewline(text, 'o     : open VimHook script in prev window')
@@ -193,6 +194,17 @@ function! s:VimHookListing.openLineInCurrentWindow()
         let index = self.getVimHookIndexByLineNum(lnum)
         let hookFilePath = self.vimHooksByListingIndex[index].path
         execute "e" . " " . hookFilePath
+    endif
+endfunction
+
+function! s:VimHookListing.runLineSynchronously()
+    let lnum = line('.')
+    let index = self.getVimHookIndexByLineNum(lnum)
+    if self.isCheckboxLine(lnum)
+        let vimHook = self.vimHooksByListingIndex[index]
+        let originalBufferName = getreg("#")
+        echom "Running VimHook in debug mode: " . vimHook.path . ' ' . shellescape(originalBufferName) . ' ' . shellescape(vimHook.event)
+        execute "!" . vimHook.path . ' ' . shellescape(originalBufferName) . ' ' . shellescape(vimHook.event)
     endif
 endfunction
 
