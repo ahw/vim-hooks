@@ -1,12 +1,28 @@
-VimHooks
-========
-**Note: exhaustive documentation is available on the project's wiki:**
-[https://github.com/ahw/vim-hooks/wiki](https://github.com/ahw/vim-hooks/wiki).
+![VimHooks](https://pd93f014.s3.amazonaws.com/vim-hooks.svg?v=1)
 
-Overview
-========
-![VimHooks Flow](https://s3.amazonaws.com/pd93f014/vim-hooks-drawing.svg?=1)
+- [Introduction](#introduction)
+- [Demos](#demos)
+    - [Sass Recompilation and Browser Reload](#sass-recompilation-and-browser-reload)
+    - [**New!** Vim as REPL](#vim-as-repl)
+- [Installation](#installation)
+- [How it works](#how-it-works)
+    - [**New!** VimHook naming pattern](#vimhook-naming-pattern)
+    - [Arguments provided to a hook script](#arguments-provided-to-a-hook-script)
+- [**New!** VimHook Options](#vimhook-options)
+    - [Available options](#available-options)
+    - [How to set options](#how-to-set-options)
+- [Commands](#commands)
+    - [ListVimHooks](#listvimhooks)
+    - [FindHookFiles](#findhookfiles)
+    - [ExecuteHookFiles](#executehookfiles)
+    - [StopExecutingHooks](#stopexecutinghooks)
+    - [StartExecutingHooks](#startexecutinghooks)
+- [Permissions](#permissions)
+- [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
+- [Example usage](#example-usage)
 
+Introduction
+============
 This is a Vim plugin that lets you automatically execute arbitrary shell
 scripts after specific `autocmd` events are fired while editing certain files.
 It does this by looking for specially-named scripts  in your current working
@@ -15,55 +31,67 @@ directory (as well as `~/.vimhooks/`) that have names like
 scripts whenever &ndash; in this example &ndash; Vim fires the `BufWritePost`
 and `CursorHold` `autocmd` events, respectively.
 
+![VimHooks Flow](https://s3.amazonaws.com/pd93f014/vim-hooks-drawing.svg?=1)
 
 VimHook scripts, which I refer to as "hook scripts," or just "hooks"
 throughout this document, can live at the project level or at a global level
 in `~/.vimhooks/`.  Hooks can be **synchronous** (the default) or
 **asynchronous** (in a fire-and-forget sort of way). The `autocmd` triggers
 can be **debounced** so hooks are only executed once within a specified
-window of time. The **stdout produced by hook scripts can be buffered** into a
-split window that **refreshes automatically** every time the hook is executed.
-Hooks **report stderr** when they
+window of time. The stdout produced by hook scripts can be loaded into a
+split window that refreshes automatically every time the hook is executed.
+Hooks that are configured to run silently will still report stderr when they
 exit with a non-zero exit code. Finally, the `:ListVimHooks` command
 provides a listing of all enabled and disabled hook scripts available in a
 particular session. They are listed in the order they would (synchronously)
-execute and can be **toggled on and off interactively.** You can make edits to
+execute and can be toggled on and off interactively. You can make edits to
 hook scripts on the fly and the changes will be reflected the next time they
 are run.
 
-Naming Pattern
-==============
-![VimHook Naming Structure](https://s3.amazonaws.com/pd93f014/vimhook-naming-diagram.svg?v=4)
+This plugin was motivated by the pain of the save-switch-reload cycle between
+editor and browser that eats up so much time in web development. I have
+included some [examples](#example-usage) that I think help illustrate how
+quickly you can exploit this plugin to speed up that iteration time. While I
+have found a number of editors which are able to "live preview" raw CSS changes
+or HTML changes, their capabilities almost always end there. How about when you
+want to Browserify your JavaScript? And compile and minify your Sass files?
+With this plugin you can restart your Jekyll server, you can play around with a
+SQL SELECT statement and see the query result in a split window&mdash;hell,
+I've even written hook scripts that run a build step and then pipe result over
+`ssh` to my laptop where I feed it to `pbcopy` so that I have it in my system
+clipboard in order to paste into an cumbersome content-scheduling tool at work
+(don't ask).
 
-Commands
-========
-- `:ListVimHooks`
-- `:FindHookFiles`
-- `:ExecuteHookFiles`
-- `:StopExecutingHooks`
-- `:StartExecutingHooks`
+<!--
+I wrote this plugin specifically to ease the write-save-switch-reload pain of
+web development, and although my most salient use case so far is the ability to
+auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`) in
+Vim (see obnoxious flashing gif below), I have a feeling there are a lot of
+other interesting use cases out there. Recently I've added the ability to use
+Vim as a sort of REPL. If you've ever wanted an easy way of hooking arbitrary
+shell scripts into Vim events, this plugin is for you.
+-->
 
-Example Usage
-=============
-- [Restart your Jekyll preview server on file write](https://github.com/ahw/vim-hooks/blob/master/examples/090.bufwritepost.vimhook.restart-jekyll-server.sh)
-- [Reload Chrome tabs on file write](https://github.com/ahw/vim-hooks/blob/master/examples/100.bufwritepost.vimhook.chrome-reloader.sh)
-- [Reload Chrome, Firefox, and Safari on file write](https://github.com/ahw/vim-hooks/blob/master/examples/bufwritepost.vimhook.reload-browsers.applescript)
-- [Recompile Sass files on file write](https://github.com/ahw/vim-hooks/blob/master/examples/scss.bufwritepost.vimhook.recompile-sass.sh)
-- [Execute SQL via sqlite3 on file write](https://github.com/ahw/vim-hooks/blob/master/examples/sql.bufwritepost.vimhook.sh)
-- [Dump stdout from a hook into a scratch buffer](https://github.com/ahw/vim-hooks/blob/master/examples/test.js.bufwritepost.vimhook.buffer-output.sh)
+If you've made it this far, congratulations. In the next sections I'll describe
+how to install the VimHooks plugin, give a bit of background on `autocommands`
+and events in Vim, and then explain in detail how to use VimHooks, what
+additional options are available, and what commands the plugin exposes. If you
+are not familiar with `autocommand`s in Vim, run `:help autocommand` for an
+overview.
 
 Demos
 =====
+Here is your obligatory set of live-demo gifs. The first is the original
+example I have used since creating this plugin, and the second is one I
+created recently, which makes use of the new "buffer output" feature.
 
-Sass Recompilation and Browser Reload
--------------------------------------
+### Sass Recompilation and Browser Reload
 _Recompile a Sass file and then reload Chrome, Firefox, and Safari using
 AppleScript._
 
 ![VimHooks Reload GIF](http://g.recordit.co/CITvKXJOFe.gif)
 
-Vim as REPL
------------
+### Vim as REPL
 _Execute whatever code you're currently editing and see the result from
 stdout opened in a new window._
 
