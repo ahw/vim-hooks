@@ -16,7 +16,7 @@ function! s:VimHook.New(path, event, pattern)
         " tilda (we are assuming that hooks of the form
         " /home/whatever/.vimhooks/bufwritepost.vimhook.sh can always be
         " referenced as ~/.vimhooks/bufwritepost.vimhook.s).
-        let newVimHook.prettyPath = substitute(newVimHook.path, '\v/.+\/\.vimhooks\/', "~/.vimhooks/", "")
+        let newVimHook.prettyPath = substitute(newVimHook.path, $HOME, "~", "")
     endif
 
     " Create a unique id for this VimHook. For now we'll assume the path to
