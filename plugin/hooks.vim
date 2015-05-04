@@ -194,7 +194,7 @@ function! s:executeVimHook(vimHook, originalBufferName)
             setlocal noswapfile
             setlocal nowrap
             setlocal number
-            if (bufferFiletype)
+            if len(bufferFiletype)
                 echom "[vim-hooks] output buffer setlocal filetype=" . bufferFiletype
                 execute 'setlocal filetype=' . bufferFiletype
             endif
