@@ -127,10 +127,6 @@ code_ of a hook script or (2) globally, via global variables in your
 To set an option flag and value in your VimHook script, add a line anywhere
 in the file that follows the convention `vimhook.myOptionKey = myOptionValue`.
 
-```
-# vimhook.bufferoutput = true
-```
-
 ### Available options
 
 Option Key/                   <br>Global Variable                  | Behavior
