@@ -12,14 +12,12 @@
     - [How to set options](#how-to-set-options)
     - [Available options](#available-options)
     - [More on setting options](#more-on-setting-options)
-    - [VimHook options grammar](#vimhook-options-grammar)
 - [Commands](#commands)
     - [ListVimHooks](#listvimhooks)
     - [FindHookFiles](#findhookfiles)
     - [ExecuteHookFiles](#executehookfiles)
     - [StopExecutingHooks](#stopexecutinghooks)
     - [StartExecutingHooks](#startexecutinghooks)
-- [Permissions](#permissions)
 - [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
 - [Example usage](#example-usage)
 
@@ -49,37 +47,6 @@ particular session. They are listed in the order they would (synchronously)
 execute and can be toggled on and off interactively. You can make edits to
 hook scripts on the fly and the changes will be reflected the next time they
 are run.
-
-This plugin was motivated by the pain of the save-switch-reload cycle between
-editor and browser that eats up so much time in web development. I have
-included some [examples](#example-usage) that I think help illustrate how
-quickly you can exploit this plugin to speed up that iteration time. While I
-have found a number of editors which are able to "live preview" raw CSS changes
-or HTML changes, their capabilities almost always end there. How about when you
-want to Browserify your JavaScript? And compile and minify your Sass files?
-With this plugin you can restart your Jekyll server, you can play around with a
-SQL SELECT statement and see the query result in a split window&mdash;hell,
-I've even written hook scripts that run a build step and then pipe result over
-`ssh` to my laptop where I feed it to `pbcopy` so that I have it in my system
-clipboard in order to paste into an cumbersome content-scheduling tool at work
-(don't ask).
-
-<!--
-I wrote this plugin specifically to ease the write-save-switch-reload pain of
-web development, and although my most salient use case so far is the ability to
-auto-reload Chrome, Firefox, and Safari tabs after a single file save (`:w`) in
-Vim (see obnoxious flashing gif below), I have a feeling there are a lot of
-other interesting use cases out there. Recently I've added the ability to use
-Vim as a sort of REPL. If you've ever wanted an easy way of hooking arbitrary
-shell scripts into Vim events, this plugin is for you.
--->
-
-If you've made it this far, congratulations. In the next sections I'll describe
-how to install the VimHooks plugin, give a bit of background on `autocommands`
-and events in Vim, and then explain in detail how to use VimHooks, what
-additional options are available, and what commands the plugin exposes. If you
-are not familiar with `autocommand`s in Vim, run `:help autocommand` for an
-overview.
 
 Demos
 =====
@@ -141,9 +108,13 @@ are all valid VimHook filenames.
 
 Arguments provided to a hook script
 -----------------------------------
-Each script is passed (1) the name of the current buffer and (2) the triggered event
-name as command-line arguments, in that order. So in a Bash shell script you
-could, for example, use `$1` and `$2` to access these values.
+Each script is passed 
+
+1. the name of the current buffer and 
+2. the triggered event name
+
+as command-line arguments, in that order. So in a Bash shell script you could,
+for example, use `$1` and `$2` to access these values.
 
 VimHook Options
 ===============
@@ -206,16 +177,6 @@ equivalent ways of setting the option `debounce.wait` to 2 seconds.
 // vimhook.debounce.wait: 2
 -- vimhook.debounce.wait : 2
 ```
-
-### VimHook options grammar
-
-If you're into this sort of thing, here it is.
-
-![VimHook Options Grammar](https://pd93f014.s3.amazonaws.com/vimhook-option-grammar-1.svg)
-
-_The full grammar of a VimHook option line. Source: [www.regexper.com](http://www.regexper.com/#vimhook%5C.%28%5B%5Cw%5C.%5D%2B%29%5Cs%2A%5B%3A%3D%5D%3F%5Cs%2A%28%5Cw%2A%29%2524)_
-![CC BY License](https://licensebuttons.net/l/by/3.0/80x15.png)
-
 
 Commands
 ========
@@ -284,51 +245,9 @@ StartExecutingHooks
 -------------------
 The `:StartExecutingHooks` command turns VimHook script triggering back on.
 
-Permissions
-============
-Ensure that your VimHook scripts have the "execute" bit set. For example,
-
-```
-$ chmod u+x .bufwritepost.vimhook.sh
-```
-
-If they do not, VimHooks will ask if you want to set the executable bit
-before running a script for the first time. If you type `y`, it will run the
-above shell command and then execute the hook script. If you type `n`, it
-will leave the permissions as-is and then *ignore that script for the
-duration of your Vim session.*
-
-![Set Permissions GIF](http://g.recordit.co/I4hxwkypZo.gif)
-
 Which autocmd events are exposed by Vim Hooks?
 ==============================================
-Currently, VimHooks responds to
-
-- `BufAdd`
-- `BufNew`
-- `VimEnter`
-- `VimLeave`
-- `BufEnter`
-- `BufLeave`
-- `BufDelete`
-- `BufUnload`
-- `BufWinLeave`
-- `BufReadPost`
-- `BufWritePost`
-
-Adding others is not difficult, but I thought there could be a negative
-performance impact if VimHooks was setting up listeners for _every_ Vim
-`autocmd` event. I haven't actually tested whether or not this is true because
-so far my use cases are covered with the few events listed above.
-
-For reference, the full list of all available `autocmd` events and a
-description of what triggers each event is available [in the Vim
-documentation](http://vimdoc.sourceforge.net/htmldoc/autocmd.html#autocmd-events)
-or by running `:help autocmd-events`. If you want to include other events
-manually you can tweak the plugin by just following the example of what is
-already in place for `BufWritePost`, `CursorHold`, and the other events listed
-above (you'll find them easily by grepping the code). You can also raise an issue
-or pull request.
+Most, but not all of them. Search for `BufWritePost` in the source and you'll find the list.
 
 Example Usage
 =============
