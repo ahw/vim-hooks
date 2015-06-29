@@ -155,16 +155,20 @@ endfunction
 function! s:VimHook.disable()
     " mv /some/hook.sh /some/hook.sh.disabled
     let newPath = self.path . ".disabled"
+    let newPrettyPath = self.prettyPath . ".disabled"
     execute "silent !mv " . self.path . " " . newPath
     let self.path = newPath
+    let self.prettyPath = newPrettyPath
     let self.isEnabled = 0
 endfunction
 
 function! s:VimHook.enable()
     " Remove the .disabled from the end
     let newPath = substitute(self.path, '\v\.disabled$', "", "")
+    let newPrettyPath = substitute(self.prettyPath, '\v\.disabled$', "", "")
     execute "silent !mv " . self.path . " " . newPath
     let self.path = newPath
+    let self.prettyPath = newPrettyPath
     " Set the execute bit
     execute "silent !chmod u+x " . self.path
     let self.isEnabled = 1
