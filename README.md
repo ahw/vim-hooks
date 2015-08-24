@@ -19,6 +19,7 @@
     - [StopExecutingHooks](#stopexecutinghooks)
     - [StartExecutingHooks](#startexecutinghooks)
 - [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
+- [Troubleshooting](#troubleshooting)
 - [Example usage](#example-usage)
 
 Introduction
@@ -253,6 +254,23 @@ Example Usage
 - [Recompile Sass files on file write](https://github.com/ahw/vim-hooks/blob/master/examples/scss.bufwritepost.vimhook.recompile-sass.sh)
 - [Execute SQL via sqlite3 on file write](https://github.com/ahw/vim-hooks/blob/master/examples/sql.bufwritepost.vimhook.sh)
 - [Dump stdout from a hook into a scratch buffer](https://github.com/ahw/vim-hooks/blob/master/examples/test.js.bufwritepost.vimhook.buffer-output.sh)
+
+Troubleshooting
+===============
+### My bufwritepost hooks aren't firing
+
+It seems that sometimes [vim-fugitive](http://github.com/tpope/vim-fugitive)
+puts Vim in a weird state where it thinks it's in diff mode. Or at least,
+VimHooks thinks it's in diff mode. The VimHooks plugin does _not_
+fire hooks while in diff mode and this might be why your hooks aren't
+firing. It's probably a bug in VimHooks, but until I get to the bottom
+of it, my remedy is to manually re-enter and then exit `:Gdiff`-mode.
+
+```
+:Gdiff " Opens up split diff window
+:q " Quit the left-hand side diff window
+" VimHooks should start working again.
+```
 
 Footnotes
 =========
