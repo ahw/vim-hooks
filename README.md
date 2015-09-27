@@ -23,6 +23,8 @@
     - [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
 - [Example usage](#example-usage)
 - [Troubleshooting](#troubleshooting)
+    - [My bufwritepost hooks aren't firing](#my-bufwritepost-hooks-arent-firing)
+    - [Hooks aren't working with Python virtualenv](#hooks-arent-working-with-python-virtualenv)
 
 Introduction
 ============
@@ -307,6 +309,36 @@ of it, my remedy is to manually re-enter and then exit `:Gdiff`-mode.
 :q " Quit the left-hand side diff window
 " VimHooks should start working again.
 ```
+
+### Hooks aren't working with Python virtualenv
+Two things you can try to fix this:
+
+1. Set your `PYTHONPATH` environment variable in your hook script.
+2. `source` your virtualenv `activate` script in your hook script.
+
+For example:
+
+```sh
+#!/bin/sh
+# vimhook.bufferoutput
+
+# This may NOT be necessary if you've installed Python in a "standard" location.
+PYTHONPATH=/Users/andrew/python/lib/python2.7
+
+# Source the activate script for your virtualenv
+source ~/public/my-env/bin/activate
+
+babel $1 > main.js
+
+# Now you can use Python modules installed in your virtualenv
+aws s3 cp main.js s3://example.bucket/
+```
+
+**The reason behind this:** Vim executes shell commands in a different
+environment than your normal login shell. You may have come across this before
+while trying to make use of custom aliases defined in your `~/.zshrc` or similar
+and discovering they don't work when you attempt `:!ll` or some other shell alias.
+
 
 Footnotes
 =========
