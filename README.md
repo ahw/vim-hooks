@@ -18,9 +18,11 @@
     - [ExecuteHookFiles](#executehookfiles)
     - [StopExecutingHooks](#stopexecutinghooks)
     - [StartExecutingHooks](#startexecutinghooks)
-- [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
-- [Troubleshooting](#troubleshooting)
+- [FAQs](#faqs)
+    - [What if I want to _manually_ fire hooks?](#what-if-i-want-to-manually-fire-hooks)
+    - [Which autocmd events are exposed by vim-hooks?](#which-autocmd-events-are-exposed-by-vim-hooks)
 - [Example usage](#example-usage)
+- [Troubleshooting](#troubleshooting)
 
 Introduction
 ============
@@ -57,13 +59,17 @@ created recently, which makes use of the new "buffer output" feature.
 
 ### Sass Recompilation and Browser Reload
 _Recompile a Sass file and then reload Chrome, Firefox, and Safari using
-AppleScript._
+AppleScript._ [See the code that does
+this.](https://github.com/ahw/vim-hooks/blob/master/examples/bufwritepost.vimhook.reload-browsers.applescript)
+(Yes, this example is a little dated. I still use this for quick things but
+[Browsersync](http://www.browsersync.io/) might be a better solution for
+you.)
 
 ![VimHooks Reload GIF](http://g.recordit.co/CITvKXJOFe.gif)
 
 ### Vim as REPL
 _Execute whatever code you're currently editing and see the result from
-stdout opened in a new window._
+stdout opened in a new window._ [See the code that does this.](https://github.com/ahw/vim-hooks/blob/master/examples/test.js.bufwritepost.vimhook.buffer-output.sh)
 
 ![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif)
 
@@ -242,9 +248,39 @@ StartExecutingHooks
 -------------------
 The `:StartExecutingHooks` command turns VimHook script triggering back on.
 
+FAQs
+====
+
+What if I want to _manually_ fire hooks?
+----------------------------------------
+You may find yourself wishing you could turn off automatic triggering of
+hooks and instead fire them manually via some convenient key mapping. Though
+I'll admit this feels a bit crude, I've had good luck with this
+straight-forward mapping in my `~/.vimrc`.
+
+```
+nnoremap gh :StartExecutingHooks<cr>:ExecuteHookFiles BufWritePost<cr>:StopExecutingHooks<cr>
+nnoremap ghl :StartExecutingHooks<cr>:ExecuteHookFiles VimLeave<cr>:StopExecutingHooks<cr>
+```
+
 Which autocmd events are exposed by Vim Hooks?
-==============================================
-Most, but not all of them. Search for `BufWritePost` in the source and you'll find the list.
+----------------------------------------------
+A handful that seemed useful, but certainly not all of them. It would be
+simple for me to add other events not on this list, but `BufWritePost` and
+`VimLeave` have been enough for all my use cases so far. Feel free to file
+an issue if you'd like others. Here is the exhaustive list at the moment:
+
+- BufAdd
+- BufNew
+- VimEnter
+- VimLeave
+- BufEnter
+- BufLeave
+- BufDelete
+- BufUnload
+- BufWinLeave
+- BufWritePost
+- BufReadPost
 
 Example Usage
 =============
