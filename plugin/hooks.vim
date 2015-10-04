@@ -308,7 +308,7 @@ function! s:createBlankVimHook(eventname, ...)
 
     execute 'botright ' . splitCommand . ' ' . newHookName
     " Manually add this hook file
-    call s:addHookFile(g:VimHook.New(newHookName, a:eventname, '\v^' . pattern . '$'), 'filename')
+    call s:addHookFile(g:VimHook.New(newHookName, a:eventname, '\v^' . pattern . '$'))
 endfunction
 
 "Create an autocmd group
