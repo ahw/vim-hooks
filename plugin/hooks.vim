@@ -302,7 +302,7 @@ function! s:createBlankVimHook(eventname, ...)
     " Default the pattern to the filename
     let pattern = filename
     if a:0 == 1 && type(a:1) == type("")
-        " If number of extra args is 1 and the first extra arg is a Number
+        " If number of extra args is 1 and the first extra arg is a String
         let pattern = a:1
     endif
 
@@ -310,6 +310,24 @@ function! s:createBlankVimHook(eventname, ...)
     " Manually add this hook file
     call s:addHookFile(g:VimHook.New(newHookName, a:eventname, '\v^' . pattern . '$'))
 endfunction
+
+function! s:createSelfHook(eventname, ...)
+    " Get the base filename (strip leading path part)
+    let filename = get(matchlist(getreg("%"), '\v[^/]+$'), 0, "")
+    let splitCommand = "vsp"
+
+    " Default the pattern to the filename
+    let pattern = filename
+    if a:0 == 1 && type(a:1) == type("")
+        " If number of extra args is 1 and the first extra arg is a String
+        let pattern = a:1
+    endif
+
+    let newVimHook = g:VimHook.New(filename, a:eventname, '\v^' . pattern . '$')
+    call s:addHookFile(newVimHook)
+    call sort(add(s:vimHooksByFilename[filename], newVimHook), "s:compareVimHooks")
+endfunction
+
 
 "Create an autocmd group
 aug VimHookGroup
@@ -368,3 +386,4 @@ command! -nargs=0 StartExecutingHooks call <SID>startExecutingHooks()
 command! -nargs=0 ListVimHooks call <SID>listVimHooks()
 
 command! -nargs=+ -complete=event CreateNewVimHook call <SID>createBlankVimHook(<f-args>)
+command! -nargs=+ -complete=event CreateSelfHook call <SID>createSelfHook(<f-args>)
