@@ -156,10 +156,12 @@ function! s:executeHookFiles(...)
 
     for eventname in a:000
         let eventname = tolower(eventname)
-        let originalBufferName = getreg('%')
+        let originalBufferName = getreg("%")
+        let head = expand("%:h")
+        let tail = expand("%:t")
         for vimHook in s:vimHooksByFilename[filename]
             if eventname ==? vimHook.event
-                let errorMessages = errorMessages . s:executeVimHook(vimHook, originalBufferName)
+                let errorMessages = errorMessages . s:executeVimHook(vimHook, originalBufferName, head, tail)
             endif
         endfor
     endfor
@@ -171,8 +173,15 @@ function! s:executeHookFiles(...)
     endif
 endfunction
 
-function! s:executeVimHook(vimHook, originalBufferName)
+function! s:executeVimHook(vimHook, originalBufferName, filenameHead, filenameTail)
+    " filenameHead and filenameHead are the result of expand("%:h") and
+    " expand("%:t"). They remove the last path component and then return the
+    " last path component, respectively. See :help expand().
+
     let errorMessages = ""
+    let tailWithoutExtension = get(matchlist(a:filenameTail, '\v^[^\.]+'), 0, "")
+    let fullPathWithoutExtension = a:filenameHead . "/" . tailWithoutExtension
+    let cmd = a:vimHook.path . ' ' . shellescape(a:originalBufferName) . ' ' . shellescape(a:vimHook.event) . ' ' . shellescape(fullPathWithoutExtension)
     if s:isAnExecutableFile(a:vimHook.path) && !a:vimHook.isIgnoreable && a:vimHook.isEnabled
         echom "[vim-hooks] Executing hookfile " . a:vimHook.baseName . " after event " . a:vimHook.event
 
@@ -199,7 +208,7 @@ function! s:executeVimHook(vimHook, originalBufferName)
                 execute 'setlocal filetype=' . bufferFiletype
             endif
 
-            execute 'silent %!'. a:vimHook.path . ' ' . shellescape(a:originalBufferName) . ' ' . shellescape(a:vimHook.event)
+            execute 'silent %!' . cmd
 
             " Press some keys to get rid of the Press ENTER prompt
             call feedkeys('lh')
@@ -215,7 +224,6 @@ function! s:executeVimHook(vimHook, originalBufferName)
             endif
 
         else
-            let cmd = a:vimHook.path . ' ' . shellescape(getreg('%')) . ' ' . shellescape(a:vimHook.event)
             let async = a:vimHook.getOptionValue(g:VimHookOptions.ASYNC.keyName)
             let wait = a:vimHook.getOptionValue(g:VimHookOptions.DEBOUNCE_WAIT.keyName)
 
@@ -250,7 +258,7 @@ function! s:executeVimHook(vimHook, originalBufferName)
 
         " Now call this function again. Hopefully we don't mess up the logic
         " here or it will loop infinitely.
-        call s:executeVimHook(a:vimHook, a:originalBufferName)
+        call s:executeVimHook(a:vimHook, a:originalBufferName, a:filenameHead, a:filenameTail)
     else
         " Assert: we're ignoring this file.
     endif
