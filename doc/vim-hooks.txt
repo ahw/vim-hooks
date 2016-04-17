@@ -122,11 +122,15 @@ ARGUMENTS PROVIDED TO A VIMHOOK SCRIPT                      *VimHooks-arguments*
 
 Each script is passed
 
-    1. the name of the current buffer, and,
-    2. the triggered event name
+    1. the name of the current buffer,
+    2. the triggered event name,
+    3. the name of the current buffer WITHOUT any extension
 
 as command-line arguments, in that order. So in a Bash shell script you
-could, for example, use $1 and $2 to access these values.
+could, for example, use $1, $2, and $3 to access these values. The third
+argument is provided as convenience in case you wish to output to a
+similarly-named file with a different filename extension (e.g., transforming
+some-file.md into some-file.md)
 
 VIMHOOKS OPTIONS                                              *VimHooks-options*
 

@@ -121,9 +121,19 @@ Each script is passed
 
 1. the name of the current buffer and 
 2. the triggered event name
+3. the name of the current buffer **without the extension**
 
 as command-line arguments, in that order. So in a Bash shell script you could,
-for example, use `$1` and `$2` to access these values.
+for example, use `$1`, `$2`, and `$3` to access these values. The third
+argument is provided as a convenience for the case where your VimHook is a
+transforming operation and you want to output to a similarly-name file but
+with a different extension. E.g.
+
+```
+# transform a markdown input file to html
+# equivalent to pandoc -o my-file.html my-file.md
+pandoc -o ${3}.html ${1}
+```
 
 VimHook Options
 ===============
