@@ -1,97 +1,90 @@
 *vim-hooks.txt*  Hook shell scripts into vim autocommand events
 
+            /$$                                    ~
+           |__/                                    ~
+ /$$    /$$ /$$ /$$$$$$/$$$$                       ~
+|  $$  /$$/| $$| $$_  $$_  $$                      ~
+ \  $$/$$/ | $$| $$ \ $$ \ $$                      ~
+  \  $$$/  | $$| $$ | $$ | $$                      ~
+   \  $/   | $$| $$ | $$ | $$                      ~
+    \_/    |__/|__/ |__/ |__/                      ~
+
+ /$$                           /$$                 ~
+| $$                          | $$                 ~
+| $$$$$$$   /$$$$$$   /$$$$$$ | $$   /$$  /$$$$$$$ ~
+| $$__  $$ /$$__  $$ /$$__  $$| $$  /$$/ /$$_____/ ~
+| $$  \ $$| $$  \ $$| $$  \ $$| $$$$$$/ |  $$$$$$  ~
+| $$  | $$| $$  | $$| $$  | $$| $$_  $$  \____  $$ ~
+| $$  | $$|  $$$$$$/|  $$$$$$/| $$ \  $$ /$$$$$$$/ ~
+|__/  |__/ \______/  \______/ |__/  \__/|_______/  ~
+
 Author:  Andy Hallagan <https://github.com/ahw/>
 Repo:    https://github.com/ahw/vim-hooks
 License: MIT
 
-INTRODUCTION                                    *vim-hooks*
+INTRODUCTION                                              *VimHooks* *vim-hooks*
 
 Hook arbitrary shell scripts into Vim's |:autocmd| events.  This plugin looks
 for specially-named scripts in your current working directory (as well as
 ~/.vimhooks/) that have names like .bufwritepost.vimhook.rb or
-.cursorhold.vimhook.sh and executes those scripts whenever -- in this example
--- Vim fires the |BufWritePost| and |CursorHold| |:autocmd| events,
+.cursorhold.vimhook.sh and executes those scripts whenever — in this example
+— Vim fires the |BufWritePost| and |CursorHold| |:autocmd| events,
 respectively.
 
 The plugin relies on specific filename patterns in order to figure out which
-scripts to execute after a given |:autocmd| event. I'll try to refer to these
-scripts consistently as "VimHook" scripts throughout, but sometimes I call
-them "hook files" or just "hooks." There are three flavors of VimHook scripts:
-global, extension-specific, and filename-specific VimHooks.
+scripts to execute after a given |:autocmd| event.
 
-TYPES OF VIM-HOOK SCRIPTS                       *vim-hook-script-types*
+VIMHOOK NAMING PATTERN                                 *VimHooks-naming-pattern*
 
-Global VimHooks ~
+The following schematic shows the VimHooks naming pattern. Each part is
+described in detail below.
 
-Global VimHook scripts are executed every time the appropriate event is
-triggered in Vim, regardless of what file you're editing.
-  
-Extension-specific VimHooks ~
+      .100.main.js.bufwritepost.vimhook.sh             ~
+      ↑└┬┘ └──┬──┘ └────┬─────┘ └──┬──┘└┬┘             ~
+      ¦ ¦     ¦         ¦          ¦    ¦              ~
+      ¦ ¦     ¦         ¦          ¦ anything you want ~
+      ¦ ¦     ¦         ¦          ¦                   ~
+      ¦ ¦     ¦         ¦      "vimhook"               ~
+      ¦ ¦     ¦       event                            ~
+      ¦ ¦  matching                                    ~
+      ¦ ¦  suffix                                      ~
+      ¦ ¦                                              ~
+      ¦ sort key                                       ~
+      ¦                                                ~
+  leading dot                                          ~
 
-Extension-specific VimHook scripts are executed every time the appropriate
-event is triggered in Vim and the filename of the current buffer has an
-extension corresponding to that which is specified in the VimHook filename.
-For example, you could create a VimHook script which is executed only when
-*.js files are changed.
+Leading dot (optional) ~
 
-File-specific VimHooks ~
+It does not matter whether the file is hidden or not.
 
-File-specific VimHook scripts are executed only when the appropriate event is
-fired in Vim and the filename of the current buffer is exactly that which is
-specified in the VimHook filename. For example, you could create a VimHook
-script which is executed only when some-special-file.html changes. Each
-script is passed the name of the current buffer and the triggered event name
-as command-line arguments. So in a Bash shell script you could, for example,
-use $1 and $2 to access these values (see example usage).
+Sort key (optional) ~
 
-NAMING CONVENTIONS                              *vim-hooks-naming-conventions*
+There can be multiple VimHooks set to trigger on the same autocmd event, and
+they are executed in lexicographical order. If it is important that certain
+hooks execute in a specific order, you can add one or more digits in this
+space to ensure the ordering is correct.
 
-A note on notation: I'm using the UNIX-style convention of enclosing optional
-parts of a pattern in square brackets and representing "blobs" with '*'. The
-'.' should be taken literally.
+Matching suffix (optional) ~
 
-Global VimHooks ~
+Assuming the event property has matched, a VimHook will trigger for all
+files ending with this matching suffix. If matching suffix is "js", the hook
+wil trigger for all files ending in "js". When matching suffix is "main.js"
+the hook will trigger for all files ending in "main.js" (including "main.js"
+itself). If there is no matching suffix the hook becomes global: it will
+trigger for all files. The matching suffix can contain dots.
 
-The format of global VimHook filenames is '[.sortkey].eventname.vimhook[.*]',
-where 'sortkey' is optional and can be whatever integer you want and
-'eventname' is any valid Vim |:autocmd| event (case-insensitive). You are
-free to add any arbitrary stuff to the end of the filename, though I think
-it looks clean if you simply add the normal extension corresponding to the
-language your script is in and leave it at that. Example valid global VimHook
-names include '.bufwritepost.vimhook.sh' and '.vimleave.vimhook.py'.
+Event (required) ~
 
-If you would like to have multiple scripts reacting to the same 'eventname'
-simply name the files using a different 'sortkey' for each. When there are
-multiple VimHook scripts with the same 'eventname' they will be executed
-serially according to the lexographic ordering of their filenames.  Thus,
-you can choose your 'sortkey's strategically if you have several scripts
-which need to run in a specific order (for example,
-'000.bufwritepost.vimhook.sh', '100.bufwritepost.vimhook.sh').
+The name of the autocmd event the hook is triggered on. Case insensitive.
 
-Extension-specific VimHooks ~
+"vimhook" (required) ~
 
-The format of extension-specific VimHook filenames is
-'[.sortkey].eventname.ext.vimhook[.*]', where 'sortkey' is optional and can be
-whatever integer you want, 'eventname' is any valid Vim |:autocmd| event
-(case-insensitive), and 'ext' is whatever filename extension you want to
-react to. For example, '.bufwritepost.scss.vimhook' will only be executed
-when the 'BufWritePost' event is fired on '*.scss' files.
+Identifies this as a VimHook script. Nothing after "vimhook" is parsed out
+by the plugin.
 
-File-specific VimHooks ~
+COMMANDS                                                     *VimHooks-commands*
 
-The format of file-specific VimHook filenames is
-'filename.eventname.vimhook[.*]', where 'filename' is the full name you want to
-react to and 'eventname' is any valid Vim |:autocmd| event
-(case-insensitive). In other words, you simply need to append
-'eventname.vimhook[.*]' to whatever file you want the hook to be associated
-with. For example, the VimHook named 'README.md.bufwritepost.vimhook.py' will
-only be executed when the 'BufWritePost' event is fired from the 'README.md'
-buffer; the VimHook named 'app.js.bufenter.vimhook.py'  will only be executed
-when the 'BufEnter' evente is fired from the 'app.js' buffer.
-
-COMMANDS                                        *vim-hooks-commands*
-
-                                                *:ListVimHooks*
+                                                                 *:ListVimHooks*
 :ListVimHooks           List all of the hook files found in the current
                         working directory as well as ~/.vimhooks/. This
                         command prints out separate sections for global-
@@ -103,7 +96,7 @@ COMMANDS                                        *vim-hooks-commands*
                         This performs exactly the same function as the
                         VimHooks plugin does automatically when you start Vim.
 
-                                                *:ExecuteHookFiles*
+                                                             *:ExecuteHookFiles*
 :ExecuteHookFiles [arguments]
                         Manually execute global hook files corresponding to
                         whichever events are given as the arguments to this
@@ -111,37 +104,140 @@ COMMANDS                                        *vim-hooks-commands*
                         usage: |:ExecuteHookFiles| BufWritePost VimLeave.
                         Currently only executes the global hook files.
 
-                                                *:StopExecutingHooks*
+                                                           *:StopExecutingHooks*
 :StopExecutingHooks     Will stop executing any previously-discovered VimHook
                         scripts for all events. To resume automatic execution
                         of VimHook scripts run |:StartExecutingHooks|. Running
                         this command multiple times in a row is the same as
                         just running it once.
 
-                                                *:StartExecutingHooks*
+                                                          *:StartExecutingHooks*
 :StartExecutingHooks    Will start executing any previously-discovered VimHook
                         scripts for all events. To pause automatic execution
                         of VimHook scripts run |:StopExecutingHooks|. Running
                         this command multiple times in a row is the same as
                         just running it once.
 
-EXAMPLES                                        *vim-hooks-examples*
+ARGUMENTS PROVIDED TO A VIMHOOK SCRIPT                      *VimHooks-arguments*
 
-Recompile Sass files on ":w" ~
+Each script is passed
 
-Working tree:
-    .
-    ├── .bufwritepost.vimhook.sh
-    ├── _colors.scss
-    ├── style.scss
-    └── style.css
+    1. the name of the current buffer, and,
+    2. the triggered event name
 
-Contents of ./.bufwritepost.vimhook.sh:
+as command-line arguments, in that order. So in a Bash shell script you
+could, for example, use $1 and $2 to access these values.
 
-    #!/bin/sh
-    sass style.scss style.css
+VIMHOOKS OPTIONS                                              *VimHooks-options*
 
-Open the style.scss file and issue a |:w| command to write out the file. This
-will trigger a |BufWritePost| event in Vim, which will in turn cause your
-.bufwritepost.vimhook.sh file to execute and recompile the style.scss file
-into style.css.
+VimHooks supports additional functionality that is exposed by setting
+various VimHook options. Option flags are set either (1) in the source code
+of a hook script or (2) globally, via global variables in your ~/.vimrc.
+
+Global option settings are applied first and overridden on a per-hook basis
+wherever they are used.
+
+How to set options ~
+
+To set an option flag and value in your VimHook script, add a line anywhere
+in the file that follows the convention vimhook.myOptionKey = myOptionValue.
+
+The option line can begin with anything you want (like a comment character)
+but should not have anything after the myOptionValue part. Whitespace around
+the = sign is irrelevant. You can use a : instead of an = sign if you
+prefer. Options with no value defined are implicitly set to "true". For
+example, here are some equivalent ways of setting the option bufferoutput to
+true.
+
+    # vimhook.bufferoutput = true
+    // vimhook.bufferoutput : true
+    -- vimhook.bufferoutput:1
+    // some other comment here then vimhook.bufferoutput
+
+The following are all equivalent ways of setting the bufferoutput key to
+false.
+
+    # vimhook.bufferoutput = false
+    >>> vimhook.bufferoutput : false
+    " vimhook.bufferoutput:0
+
+For the sake of showing an example of a non-boolean option, these are all
+equivalent ways of setting the option debounce.wait to 2 seconds.
+
+    # vimhook.debounce.wait = 2
+    // vimhook.debounce.wait: 2
+    -- vimhook.debounce.wait : 2
+
+Available options ~
+
+BUFFER OUTPUT                                    *VimHooks-options-bufferoutput*
+
+The following sections show the option syntax you would put in your VimHook
+script on the first line, the ~/.vimrc global variable you set in the second
+line, and a description of their corresponding functionality in the next
+paragraph.
+
+vimhook.bufferoutput ~
+g:vimhooks_bufferoutput ~
+
+When true, dump the stdout from this hook script into a new scratch buffer,
+opened automatically in a new window. If the buffer already exists,
+overwrite it and refresh the window. When false, VimHook scripts are
+executed silently, though stderr is still reported when scripts exit with a
+non-zero exit code. Default: false
+
+VERTICAL SPLIT BUFFERED OUTPUT    *VimHooks-options-bufferoutput-vertical-split*
+
+vimhook.bufferoutput.vsplit ~
+g:vimhooks_bufferoutput_vsplit ~
+
+When true, open the buffer output window in a vertical split instead of the
+default horizontal. When false or omitted, buffer output window is opened in
+a horizontal split. This option is only relevant when vimhook.bufferoutput
+is true. Default: false
+
+SET FILETYPE FOR BUFFERED OUTPUT    *VimHooks-options-bufferoutput-set-filetype*
+
+vimhook.bufferoutput.filetype ~
+g:vimhooks_bufferoutput_filetype ~
+
+Sets the filetype of the output buffer to whatever value is provided. Useful
+if you want to get syntax highlighting or some other filetype-specific
+goodness from the output buffer. Default: unset
+
+FEED KEYS IN BUFFERED OUTPUT           *VimHooks-options-bufferoutput-feed-keys*
+
+vimhook.bufferoutput.feedkeys ~
+g:vimhooks_bufferoutput_feedkeys ~
+
+Executes whatever Normal commands are provided. For example,
+vimhook.bufferoutput.feedkeys = G would cause the output buffer to always
+scroll to the bottom. Default: unset
+
+ASYNC                                                           *VimHooks-async*
+
+vimhook.async ~
+g:vimhooks_async ~
+
+When true, execute this hook in a forked process. The exit code, stdout, and
+stderr will all be lost to the ether ("fire and forget"). Default: false
+
+DEBOUNCE                                                     *VimHooks-debounce*
+
+vimhook.debounce.wait: N ~
+g:vimhooks_debounce_wait ~
+
+You can set the vimhook.debounce.wait: N option in a hook script to execute
+the script in a forked process after N seconds have elapsed since the last
+trigger of this particular hook. Debounced hooks are implicitly async, so
+the disclaimers described for that option hold for debounced hooks too.
+Default: unset
+
+LIST HOOKS LEXICOGRAPHICALLY                       *VimHooks-list-enabled-first*
+
+(Local option not applicable) ~
+g:vimhooks_list_enabled_first ~
+
+When explicitly set to false, |:ListVimHooks| will stop grouping enabled
+hooks first and disabled hooks second. Instead, all hooks are listed in
+lexicographical order. Default: true
