@@ -174,7 +174,7 @@ function! s:executeHookFiles(...)
 endfunction
 
 function! s:executeVimHook(vimHook, originalBufferName, filenameHead, filenameTail)
-    " filenameHead and filenameHead are the result of expand("%:h") and
+    " filenameHead and filenameTail are the result of expand("%:h") and
     " expand("%:t"). They remove the last path component and then return the
     " last path component, respectively. See :help expand().
 
