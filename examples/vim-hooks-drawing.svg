@@ -9,11 +9,11 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="744.09448819"
-   height="1052.3622047"
+   width="3029.7493"
+   height="1225.3674"
    id="svg3100"
    version="1.1"
-   inkscape:version="0.48.5 r10040"
+   inkscape:version="0.91 r13725"
    sodipodi:docname="vim-hooks-drawing.svg">
   <defs
      id="defs3102" />
@@ -25,16 +25,20 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.175"
-     inkscape:cx="3210.188"
-     inkscape:cy="-415.37975"
+     inkscape:cx="1457.6534"
+     inkscape:cy="1016.3029"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1055"
      inkscape:window-height="624"
      inkscape:window-x="88"
-     inkscape:window-y="45"
-     inkscape:window-maximized="0" />
+     inkscape:window-y="68"
+     inkscape:window-maximized="0"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <metadata
      id="metadata3105">
     <rdf:RDF>
@@ -50,7 +54,8 @@
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(-1519.6219,-917.20135)">
     <rect
        style="fill:#fde831;fill-opacity:0.63478262;stroke:none"
        id="rect4037-6-3"
