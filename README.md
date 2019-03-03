@@ -1,4 +1,4 @@
-![VimHooks](https://pd93f014.s3.amazonaws.com/vim-hooks.svg?v=1)
+![VimHooks](https://ahw.github.io/vim-hooks/examples/vim-hooks.svg)
 
 - [Introduction](#introduction)
 - [Demos](#demos)
@@ -36,7 +36,7 @@ directory (as well as `~/.vimhooks/`) that have names like
 scripts whenever &ndash; in this example &ndash; Vim fires the `BufWritePost`
 and `CursorHold` `autocmd` events, respectively.
 
-![VimHooks Flow](https://s3.amazonaws.com/pd93f014/vim-hooks-drawing.svg?=1)
+![VimHooks Flow](https://ahw.github.io/vim-hooks/examples/vim-hooks-drawing.svg)
 
 VimHook scripts, which I refer to as "hook scripts," or just "hooks"
 throughout this document, can live at the project level or at a global level
@@ -97,7 +97,7 @@ that the plugin can parse them out. This pattern is described below.
 
 VimHook naming pattern
 ----------------------
-![VimHook Naming Structure](https://s3.amazonaws.com/pd93f014/vimhook-naming-diagram.svg?v=4)
+![VimHook Naming Structure](https://ahw.github.io/vim-hooks/examples/vim-hooks-naming-diagram.svg)
 
 Property                       | Description
 ---                            | ---
