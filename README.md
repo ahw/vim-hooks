@@ -119,21 +119,27 @@ Arguments provided to a hook script
 -----------------------------------
 Each script is passed 
 
-1. the name of the current buffer and 
+1. the name of the current buffer
 2. the triggered event name
-3. the name of the current buffer **without the extension**
+3. the path to the current file **without the extension**
+4. the path to the parent directory of the current file
+
 
 as command-line arguments, in that order. So in a Bash shell script you could,
-for example, use `$1`, `$2`, and `$3` to access these values. The third
-argument is provided as a convenience for the case where your VimHook is a
-transforming operation and you want to output to a similarly-name file but
-with a different extension. E.g.
+for example, use `$1`, `$2`, `$3`, and `$4` to access these values.
 
-```
-# transform a markdown input file to html
-# equivalent to pandoc -o my-file.html my-file.md
-pandoc -o ${3}.html ${1}
-```
+### Example
+
+Assuming you have a VimHook named `Circle.java.bufwritepost.vimhook.sh`, the
+table shows which arguments map to which things.
+
+Bash code         | Output
+------------------|-------------
+`echo $1`         | Circle.java
+`echo $2`         | bufwritepost
+`echo $3`         | ./Circle
+`echo $4`         | .
+`echo ${1%.java}` | Circle
 
 VimHook Options
 ===============
