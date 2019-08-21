@@ -73,7 +73,7 @@ you.)
 _Execute whatever code you're currently editing and see the result from
 stdout opened in a new window._ [See the code that does this.](https://github.com/ahw/vim-hooks/blob/master/examples/test.js.bufwritepost.vimhook.buffer-output.sh)
 
-![VimHooks Buffer Output GIF](https://s3.amazonaws.com/pd93f014/buffer-output-2.gif)
+![VimHooks Buffer Output GIF](https://ahw.github.io/vim-hooks/examples/buffer-output-2.gif)
 
 Installation
 ============
