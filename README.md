@@ -130,16 +130,20 @@ for example, use `$1`, `$2`, `$3`, and `$4` to access these values.
 
 ### Example
 
-Assuming you have a VimHook named `Circle.java.bufwritepost.vimhook.sh`, the
-table shows which arguments map to which things.
+Let's assume
 
-Bash code         | Output
-------------------|-------------
-`echo $1`         | Circle.java
-`echo $2`         | bufwritepost
-`echo $3`         | ./Circle
-`echo $4`         | .
-`echo ${1%.java}` | Circle
+* You're editing a file named `Circle.java` and
+* You have a VimHook named `Circle.java.bufwritepost.vimhook.sh` in your current working directory
+
+Then the table below shows which arguments map to which things.
+
+Bash code inside `Circle.java.bufwritepost.vimhook.sh` | Output
+-------------------------------------------------------|-------------
+`echo $1`                                              | Circle.java
+`echo $2`                                              | bufwritepost
+`echo $3`                                              | ./Circle
+`echo $4`                                              | .
+`echo ${1%.java}`                                      | Circle
 
 VimHook Options
 ===============
