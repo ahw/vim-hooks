@@ -148,9 +148,10 @@ Bash code inside `Circle.java.bufwritepost.vimhook.sh` | Output
 VimHook Options
 ===============
 VimHooks supports additional functionality that is exposed by setting
-various VimHook _options_. Option flags are set either (1) _in the source
-code_ of a hook script or (2) globally, via global variables in your
-`~/.vimrc`.
+various VimHook _options_. Option flags are set either
+
+1. 📄 Locally _in the source code_ of a hook script, or
+2. 🌍 Globally, via global variables in your `~/.vimrc`.
 
 ### How to set options
 To set an option flag and value in your VimHook script, add a line anywhere
@@ -161,13 +162,13 @@ in the file that follows the convention `vimhook.myOptionKey = myOptionValue`.
 📄 Option Key / 🌎 Global Variable                                                           | Behavior
 ---                                                                                          | ---
 📄&nbsp;`vimhook.bufferoutput`           <br>🌎&nbsp;`g:vimhooks_bufferoutput`           | When true, dump the stdout from this hook script into a new scratch buffer, opened automatically in a new window. If the buffer already exists, overwrite it and refresh the window. When false, VimHook scripts are executed silently, though stderr is still reported when scripts exit with a non-zero exit code. **Default: false**
-📄&nbsp;`vimhook.bufferoutput.vsplit`    <br>🌎&nbsp;`g:vimhooks_bufferoutput_vsplit`    | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. **Default: false**
-📄&nbsp;`vimhook.bufferoutput.filetype`  <br>🌎&nbsp;`g:vimhooks_bufferoutput_filetype`  | Sets the filetype of the output buffer to whatever value is provided. Useful if you want to get syntax highlighting or some other filetype-specific goodness from the output buffer. **Default: unset**
+📄&nbsp;`vimhook.bufferoutput.vsplit`    <br>🌏&nbsp;`g:vimhooks_bufferoutput_vsplit`    | When true, open the buffer output window in a vertical split instead of the default horizontal. When false or omitted, buffer output window is opened in a horizontal split. This option is only relevant when `vimhook.bufferoutput` is `true`. **Default: false**
+📄&nbsp;`vimhook.bufferoutput.filetype`  <br>🌍&nbsp;`g:vimhooks_bufferoutput_filetype`  | Sets the filetype of the output buffer to whatever value is provided. Useful if you want to get syntax highlighting or some other filetype-specific goodness from the output buffer. **Default: unset**
 📄&nbsp;`vimhook.bufferoutput.wrap_mode` <br>🌎&nbsp;`g:vimhooks_bufferoutput_wrap_mode` | Executes `:set wrap` or `:set nowrap` in the output buffer depending on the value. The value should either be `wrap` or `nowrap`. **Default: nowrap**
-📄&nbsp;`vimhook.bufferoutput.feedkeys`  <br>🌎&nbsp;`g:vimhooks_bufferoutput_feedkeys`  | Executes whatever Normal commands are provided. For example, `vimhook.bufferoutput.feedkeys = G` would cause the output buffer to always scroll to the bottom. **Default: unset**
-📄&nbsp;`vimhook.async`                  <br>🌎&nbsp;`g:vimhooks_async`                  | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether ("fire and forget"). **Default: false**
+📄&nbsp;`vimhook.bufferoutput.feedkeys`  <br>🌏&nbsp;`g:vimhooks_bufferoutput_feedkeys`  | Executes whatever Normal commands are provided. For example, `vimhook.bufferoutput.feedkeys = G` would cause the output buffer to always scroll to the bottom. **Default: unset**
+📄&nbsp;`vimhook.async`                  <br>🌍&nbsp;`g:vimhooks_async`                  | When true, execute this hook in a forked process. The exit code, stdout, and stderr will all be lost to the ether ("fire and forget"). **Default: false**
 📄&nbsp;`vimhook.debounce.wait: N`       <br>🌎&nbsp;`g:vimhooks_debounce_wait`          | You can set the `vimhook.debounce.wait: N` option in a hook script to execute the script in a forked process after _N_ seconds have elapsed since the last trigger of this particular hook. Debounced hooks are implicitly async, so the disclaimers described for that option hold for debounced hooks too. **Default: unset**
-📄&nbsp;_(Not applicable)_               <br>🌎&nbsp;`g:vimhooks_list_enabled_first`     | When explicitly set to false, `:ListVimHooks` will stop grouping enabled hooks first and disabled hooks second. Instead, all hooks are listed in lexicographical order. **Default: true**
+📄&nbsp;_(Not applicable)_               <br>🌏&nbsp;`g:vimhooks_list_enabled_first`     | When explicitly set to false, `:ListVimHooks` will stop grouping enabled hooks first and disabled hooks second. Instead, all hooks are listed in lexicographical order. **Default: true**
 
 ### More on setting options
 Global option settings are applied first and overridden on a per-hook basis
