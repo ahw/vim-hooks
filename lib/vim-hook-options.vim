@@ -11,6 +11,10 @@ let s:VimHookOptions = {
     \         'keyName': 'bufferoutput.filetype',
     \         'globalVariableName': 'g:vimhooks_bufferoutput_filetype'
     \     },
+    \     'BUFFER_OUTPUT_WRAP_MODE': {
+    \         'keyName': 'bufferoutput.wrap_mode',
+    \         'globalVariableName': 'g:vimhooks_bufferoutput_wrap_mode'
+    \     },
     \     'BUFFER_OUTPUT_FEEDKEYS': {
     \         'keyName': 'bufferoutput.feedkeys',
     \         'globalVariableName': 'g:vimhooks_bufferoutput_feedkeys'

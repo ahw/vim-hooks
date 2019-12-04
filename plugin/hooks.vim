@@ -190,6 +190,7 @@ function! s:executeVimHook(vimHook, originalBufferName, filenameHead, filenameTa
 
             let splitCommand = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_VSPLIT.keyName) ? 'vnew' : 'new'
             let bufferFiletype = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_FILETYPE.keyName)
+            let bufferWrapMode =  a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_WRAP_MODE.keyName)
             let feedKeys = a:vimHook.getOptionValue(g:VimHookOptions.BUFFER_OUTPUT_FEEDKEYS.keyName)
             let winnr = bufwinnr('^' . a:vimHook.outputBufferName . '$')
             " If window doesn't exist, create a new one using
@@ -206,6 +207,18 @@ function! s:executeVimHook(vimHook, originalBufferName, filenameHead, filenameTa
             if len(bufferFiletype)
                 echom "[vim-hooks] output buffer setlocal filetype=" . bufferFiletype
                 execute 'setlocal filetype=' . bufferFiletype
+            endif
+
+            " This logic controls calling "set wrap" or "set nowrap". SHould
+            " probably be generalized to support setting arbitrary buffer
+            " options.
+            if len(bufferWrapMode)
+                echom "[vim-hooks] output buffer setlocal " . bufferWrapMode
+                if bufferWrapMode == 'wrap'
+                    execute 'setlocal wrap'
+                elseif bufferWrapMode == 'nowrap'
+                    execute 'setlocal nowrap'
+                endif
             endif
 
             execute 'silent %!' . cmd
