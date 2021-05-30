@@ -33,8 +33,13 @@ scripts after specific `autocmd` events are fired while editing certain files.
 It does this by looking for specially-named scripts  in your current working
 directory (as well as `~/.vimhooks/`) that have names like
 `.bufwritepost.vimhook.rb` or `.cursorhold.vimhook.sh` and executes those
-scripts whenever &ndash; in this example &ndash; Vim fires the `BufWritePost`
+scripts whenever &mdash; in this example &mdash; Vim fires the `BufWritePost`
 and `CursorHold` `autocmd` events, respectively.
+
+In Other Words
+--------------
+If you came here thinking, _"I'd like to run a script every time I save a file in Vim"_
+then this plugin is for you. Keep reading.
 
 ![VimHooks Flow](https://ahw.github.io/vim-hooks/examples/vim-hooks-drawing.svg)
 
@@ -103,7 +108,7 @@ Property                       | Description
 ---                            | ---
 **leading dot** (optional)     | Doesn't matter whether the file is hidden or not.
 **sort key** (optional)        | There can be multiple VimHooks set to trigger on the same `autocmd` event, and they are executed in lexicographical order. If it is important that certain hooks execute in a specific order, you can add one or more digits in this space to ensure the ordering is correct.
-**matching suffix** (optional) | Assuming the **event** property has matched, a VimHook will trigger for all files ending with this matching suffix. If **matching suffix** is "js", the hook wil trigger for all files ending in "js". When matching suffix is "main.js" the hook will trigger for all files ending in "main.js" (including "main.js" itself). If there is no matching suffix the hook becomes global: it will trigger for all files. The matching suffix can contain dots.
+**matching suffix** (optional) | Assuming the **event** property has matched, a VimHook will trigger for all files ending with this matching suffix. If **matching suffix** is "js", the hook will trigger for all files ending in "js". When matching suffix is "main.js" the hook will trigger for all files ending in "main.js" (including "main.js" itself). If there is no matching suffix the hook becomes global: it will trigger for all files. The matching suffix can contain dots.
 **event**                      | The name of the `autocmd` event the hook is triggered on. Case insensitive.
 **"vimhook"**                  | Identifies this as a VimHook script. Nothing after "vimhook" is parsed out by the plugin.
 
@@ -155,7 +160,12 @@ various VimHook _options_. Option flags are set either
 
 ### How to set options
 To set an option flag and value in your VimHook script, add a line anywhere
-in the file that follows the convention `vimhook.myOptionKey = myOptionValue`.
+in the file that follows the convention `<comment_token> vimhook.myOptionKey = myOptionValue`.
+For example, in a Bash script this would be a valid way to set an option:
+
+```bash
+# vimhook.bufferoutput = true
+```
 
 ### Available options
 
